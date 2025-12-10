@@ -1,0 +1,300 @@
+{
+	"info": {
+		"_postman_id": "jayantslist-api-tests",
+		"name": "JayantsList API Tests",
+		"description": "Comprehensive API test collection for JayantsList",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Authentication",
+			"item": [
+				{
+					"name": "1.1 Send OTP",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"mobile\": \"9675789818\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/accounts/send-otp",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"accounts",
+								"send-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "1.2 Validate OTP",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"auth_token\", jsonData.auth_token);",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"mobile\": \"9675789818\",\n  \"otp\": \"123456\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/accounts/validate-otp",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"accounts",
+								"validate-otp"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. Location",
+			"item": [
+				{
+					"name": "2.1 Update Location",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"latitude\": 26.4499,\n  \"longitude\": 80.3319\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/accounts/update-last-location",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"accounts",
+								"update-last-location"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Categories",
+			"item": [
+				{
+					"name": "3.1 Get Root Categories",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/sellers/categories",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"sellers",
+								"categories"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3.2 Get Subcategories (ID=1)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/sellers/categories?parent_id=1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"sellers",
+								"categories"
+							],
+							"query": [
+								{
+									"key": "parent_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "4. Seller Discovery",
+			"item": [
+				{
+					"name": "4.1 Get Nearby Sellers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/sellers/nearby-sellers",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"sellers",
+								"nearby-sellers"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4.2 Search Sellers",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/sellers/search?q=electrical",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"sellers",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "electrical"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "5. User Actions",
+			"item": [
+				{
+					"name": "5.1 Pin Seller",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"seller_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/accounts/pin-seller",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"accounts",
+								"pin-seller"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://www.jayantslist.com",
+			"type": "string"
+		},
+		{
+			"key": "auth_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

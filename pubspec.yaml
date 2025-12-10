@@ -1,0 +1,44 @@
+name: jayantslist
+description: A professional marketplace app
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.2
+  google_fonts: ^6.1.0
+  shared_preferences: ^2.2.2
+  permission_handler: ^11.0.1
+  geolocator: ^10.1.0
+  geocoding: ^2.1.1
+  http: ^1.6.0
+  uuid: ^4.2.1
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.0
+  algoliasearch: ^1.41.0
+  convert: ^3.1.2
+  country_picker: ^2.0.27
+  image_picker: ^1.0.7
+  url_launcher: ^6.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_native_splash: ^2.3.10
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+
+flutter_native_splash:
+  color: "#0f2027"
+  color_dark: "#0f2027"
+  android: true
+  ios: true
+  web: false
