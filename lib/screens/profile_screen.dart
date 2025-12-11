@@ -13,6 +13,7 @@ import '../services/user_preferences.dart';
 import '../services/api_service.dart';
 import '../models/seller.dart';
 import 'seller_detail_screen.dart';
+import 'home_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -93,40 +94,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final isEmpty = currentList.isEmpty;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFEDE9DF),
-        elevation: 0,
-        titleSpacing: 0,
-        toolbarHeight: 10,
-        title: const SizedBox.shrink(),
-        actions: const [],
-      ),
-      backgroundColor: const Color(0xFFFAF7F0),
+      backgroundColor: const Color(0xFFF8F6F1),
       body: Column(
         children: [
+          // Elegant Header Section with dark theme
           Container(
-            color: const Color(0xFFEDE9DF),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            child: Stack(
-              children: [
-                Column(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF34495E),
+                  Color(0xFF2C3E50),
+                ],
+              ),
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: Column(
                   children: [
-                    Center(
+                    // Top row with logout
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        GestureDetector(
+                          onTap: _logout,
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.logout, size: 18, color: Colors.white70),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    
+                    // Profile Avatar with elegant golden border
+                    Container(
+                      padding: const EdgeInsets.all(2.5),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [Color(0xFFD4AF37), Color(0xFFE8D5B7), Color(0xFFD4AF37)],
+                        ),
+                      ),
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
                           CircleAvatar(
-                            radius: 40,
-                            backgroundColor: const Color(0xFFCDDC39).withOpacity(0.25),
+                            radius: 36,
+                            backgroundColor: const Color(0xFFF8F6F1),
                             child: _pictureUrl.isNotEmpty
                                 ? ClipOval(
                                     child: Image.network(
                                       _pictureUrl,
-                                      width: 80,
-                                      height: 80,
+                                      width: 68,
+                                      height: 68,
                                       fit: BoxFit.cover,
                                       errorBuilder: (context, error, stackTrace) {
-                                        return const Icon(Icons.person, color: Color(0xFF1A1A1A), size: 30);
+                                        return Text(
+                                          uname.isNotEmpty ? uname[0].toUpperCase() : '?',
+                                          style: GoogleFonts.playfairDisplay(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.w700,
+                                            color: const Color(0xFF2C3E50),
+                                          ),
+                                        );
                                       },
                                     ),
                                   )
@@ -134,17 +172,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ? ClipOval(
                                         child: Image.file(
                                           File(_profileImagePath),
-                                          width: 80,
-                                          height: 80,
+                                          width: 68,
+                                          height: 68,
                                           fit: BoxFit.cover,
                                         ),
                                       )
-                                    : const Icon(Icons.person, color: Color(0xFF1A1A1A), size: 30)),
+                                    : Text(
+                                        uname.isNotEmpty ? uname[0].toUpperCase() : '?',
+                                        style: GoogleFonts.playfairDisplay(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.w700,
+                                          color: const Color(0xFF2C3E50),
+                                        ),
+                                      )),
                           ),
                           Positioned(
                             right: 0,
                             bottom: 0,
-                            child: InkWell(
+                            child: GestureDetector(
                               onTap: () async {
                                 final src = await _askImageSource();
                                 if (src != null) {
@@ -152,121 +197,229 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   if (p != null) {
                                     setState(() {
                                       _profileImagePath = p;
+                                      _pictureUrl = '';
                                     });
-                                    await _save();
+                                    final prefs = await SharedPreferences.getInstance();
+                                    await prefs.setString('user_profile_image_path', _profileImagePath.trim());
+                                    await prefs.remove('user_picture_url');
+                                    await _autoSaveProfileImage(_profileImagePath);
                                   }
                                 }
                               },
-                              borderRadius: BorderRadius.circular(16),
                               child: Container(
-                                width: 24,
-                                height: 24,
+                                width: 22,
+                                height: 22,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFAF7F0),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: const Color(0xFF1A1A1A).withOpacity(0.15), width: 1.2),
+                                  color: const Color(0xFFD4AF37),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: const Color(0xFF2C3E50), width: 2),
                                 ),
-                                child: const Icon(Icons.edit, size: 14, color: Color(0xFF1A1A1A)),
+                                child: const Icon(Icons.edit, size: 10, color: Colors.white),
                               ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Center(
-                      child: Text(
-                        uname,
-                        style: GoogleFonts.playfairDisplay(color: const Color(0xFF1A1A1A), fontSize: 16, fontWeight: FontWeight.w700),
+                    const SizedBox(height: 10),
+                    
+                    // User name with elegant typography
+                    Text(
+                      uname,
+                      style: GoogleFonts.playfairDisplay(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
+                    
+                    // Action buttons row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(
-                          height: 40,
-                          width: 140,
-                          child: OutlinedButton(
-                            onPressed: _showEditProfileDialog,
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF1A1A1A),
-                              side: BorderSide(color: const Color(0xFF1A1A1A).withOpacity(0.15), width: 1.2),
-                              backgroundColor: const Color(0xFFFAF7F0),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        // Edit profile button
+                        Container(
+                          height: 34,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(17),
+                            border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: _showEditProfileDialog,
+                              borderRadius: BorderRadius.circular(17),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: Center(
+                                  child: Text(
+                                    'Edit Profile',
+                                    style: GoogleFonts.lato(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
-                            child: Text('Edit profile', style: GoogleFonts.lato(color: const Color(0xFF1A1A1A), fontSize: 13, fontWeight: FontWeight.w700)),
                           ),
                         ),
+                        const SizedBox(width: 10),
+                        
+                        if (_userRole.toUpperCase() == 'SELLER')
+                          Container(
+                            height: 34,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFD4AF37), Color(0xFFE8D5B7)],
+                              ),
+                              borderRadius: BorderRadius.circular(17),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => const CreateServicePostPage(),
+                                    ),
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(17),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  child: Center(
+                                    child: Text(
+                                      'Create Post',
+                                      style: GoogleFonts.lato(
+                                        color: const Color(0xFF2C3E50),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ],
                 ),
-                Positioned(
-                  right: 0,
-                  top: 0,
+              ),
+            ),
+          ),
+          
+          // Gold accent divider
+          Container(
+            height: 2,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.transparent,
+                  Color(0xFFD4AF37),
+                  Color(0xFFE8D5B7),
+                  Color(0xFFD4AF37),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+          
+          // Tab Bar with elegant design
+          Container(
+            color: Colors.white,
+            child: Row(
+              children: [
+                Expanded(
                   child: GestureDetector(
-                    onTap: _logout,
-                    child: const Icon(Icons.logout, size: 24, color: Color(0xFF1A1A1A)),
+                    onTap: () {
+                      setState(() => _tabIndex = 0);
+                      _load();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: _tabIndex == 0 ? const Color(0xFFD4AF37) : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.bookmark_outline,
+                            size: 14,
+                            color: _tabIndex == 0 ? const Color(0xFF2C3E50) : const Color(0xFF9CA3AF),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Pinned Sellers',
+                            style: GoogleFonts.lato(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: _tabIndex == 0 ? const Color(0xFF2C3E50) : const Color(0xFF9CA3AF),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 20,
+                  color: const Color(0xFFE5E7EB),
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() => _tabIndex = 1);
+                      _load();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: _tabIndex == 1 ? const Color(0xFFD4AF37) : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.history,
+                            size: 14,
+                            color: _tabIndex == 1 ? const Color(0xFF2C3E50) : const Color(0xFF9CA3AF),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Recently Viewed',
+                            style: GoogleFonts.lato(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: _tabIndex == 1 ? const Color(0xFF2C3E50) : const Color(0xFF9CA3AF),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          Container(
-            color: const Color(0xFFEDE9DF),
-            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 6),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                border: Border(
-                  top: BorderSide(color: const Color(0xFF1A1A1A).withOpacity(0.12), width: 1),
-                  bottom: BorderSide(color: const Color(0xFF1A1A1A).withOpacity(0.12), width: 1),
-                ),
-              ),
-              padding: EdgeInsets.zero,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 36,
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          setState(() => _tabIndex = 0);
-                          _load(); // Reload to refresh list
-                        },
-                        icon: Icon(Icons.grid_on, size: 16, color: const Color(0xFF1A1A1A)),
-                        label: Text('Pinned Sellers', style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
-                        style: OutlinedButton.styleFrom(
-                          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                          side: const BorderSide(color: Colors.transparent, width: 0),
-                          backgroundColor: _tabIndex == 0 ? const Color(0xFFCDDC39).withOpacity(0.2) : Colors.transparent,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: SizedBox(
-                      height: 36,
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          setState(() => _tabIndex = 1);
-                          _load(); // Reload to refresh list
-                        },
-                        icon: Icon(Icons.history, size: 16, color: const Color(0xFF1A1A1A)),
-                        label: Text('Recently Viewed', style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
-                        style: OutlinedButton.styleFrom(
-                          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-                          side: const BorderSide(color: Colors.transparent, width: 0),
-                          backgroundColor: _tabIndex == 1 ? const Color(0xFFCDDC39).withOpacity(0.2) : Colors.transparent,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          
+          // Content Area
           Expanded(
             child: SafeArea(
               bottom: true,
@@ -274,35 +427,80 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 child: isEmpty
-                    ? GridView.builder(
-                        padding: const EdgeInsets.all(4),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 4,
-                          mainAxisSpacing: 4,
-                          childAspectRatio: 0.85,
+                    ? Center(
+                        key: ValueKey(_tabIndex == 0 ? 'empty_pinned' : 'empty_recent'),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2C3E50).withOpacity(0.08),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                _tabIndex == 0 ? Icons.bookmark_border : Icons.history,
+                                size: 32,
+                                color: const Color(0xFF2C3E50).withOpacity(0.5),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              _tabIndex == 0 ? 'No pinned sellers' : 'No recent views',
+                              style: GoogleFonts.playfairDisplay(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF2C3E50),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              _tabIndex == 0 
+                                  ? 'Save your favorite sellers here'
+                                  : 'Start exploring to see history',
+                              style: GoogleFonts.lato(
+                                fontSize: 11,
+                                color: const Color(0xFF6B7280),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                    builder: (_) => const HomeScreen(),
+                                  ),
+                                  (route) => false,
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF34495E), Color(0xFF2C3E50)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  'Explore Now',
+                                  style: GoogleFonts.lato(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        itemCount: 12,
-                        itemBuilder: (context, index) {
-                          // Blurred placeholder card
-                          return Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFAF7F0).withOpacity(0.5),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFF1A1A1A).withOpacity(0.05), width: 1),
-                            ),
-                            child: Center(
-                              child: Icon(Icons.image, color: const Color(0xFF1A1A1A).withOpacity(0.1), size: 24),
-                            ),
-                          );
-                        },
                       )
                     : GridView.builder(
-                        padding: const EdgeInsets.all(4),
+                        key: ValueKey(_tabIndex == 0 ? 'grid_pinned' : 'grid_recent'),
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 3,
-                          crossAxisSpacing: 4,
-                          mainAxisSpacing: 4,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
                           childAspectRatio: 0.85,
                         ),
                         itemCount: currentList.length,
@@ -316,43 +514,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
-      floatingActionButton: _userRole.toUpperCase() == 'SELLER'
-          ? Builder(
-              builder: (context) {
-                // Calculate bottom nav bar total height:
-                // Navigation bar height (58) + SafeArea bottom (6) + vertical margins (16) + extra spacing (10)
-                const double navBarHeight = 58.0;
-                const double navBarSafeArea = 6.0;
-                const double navBarMargins = 16.0; // 8 top + 8 bottom
-                const double extraSpacing = 10.0;
-                const double totalBottomPadding = navBarHeight + navBarSafeArea + navBarMargins + extraSpacing;
-                
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: totalBottomPadding),
-                  child: FloatingActionButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const CreateServicePostPage(),
-                        ),
-                      );
-                    },
-                    backgroundColor: const Color(0xFF014D4E),
-                    elevation: 6,
-                    child: ClipOval(
-                      child: Image.asset(
-                        'assets/images/Copilot_20251204_141221.png',
-                        width: 32,
-                        height: 32,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            )
-          : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
@@ -368,131 +529,150 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return GestureDetector(
       onTap: () async {
+        // Add to recently viewed immediately
+        await UserPreferences().addToRecentlyViewed(s);
+        
         // Check selection status from _savedBiz list
         final isSaved = _savedBiz.any((element) => element.id == s.id);
-        final result = await Navigator.of(context).push(
+        
+        await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => SellerDetailScreen(
               seller: s,
               isSaved: isSaved,
-              // userPosition is optional check navigation
             ),
           ),
         );
 
-        if (result != null && s.id != null) {
-           if (result == 'save') {
-             try { await ApiService().pinSeller(s.id!); } catch(e) { debugPrint('Pin failed: $e'); }
-             // Ensure it's added
-             if (!_savedBiz.any((e) => e.id == s.id)) {
-                await UserPreferences().toggleSavedSeller(s);
-             }
-           } else if (result == 'unsave') {
-             try { await ApiService().unpinSeller(s.id!); } catch(e) { debugPrint('Unpin failed: $e'); }
-             // Ensure it's removed
-             if (_savedBiz.any((e) => e.id == s.id)) {
-                await UserPreferences().toggleSavedSeller(s);
-             }
-           }
-           _load();
-        }
+        // Always reload to reflect changes made in detail screen
+        if (mounted) _load(); 
       },
       child: Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFFFAF7F0),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF1A1A1A).withOpacity(0.1), width: 1),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2)),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 12),
-              Center(
-                child: CircleAvatar(
-                  radius: 20, 
-                  backgroundColor: const Color(0xFFEDE9DF),
-                  backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
-                  child: imageUrl == null 
-                      ? Text(dn.isNotEmpty ? dn[0].toUpperCase() : '?', style: GoogleFonts.playfairDisplay(fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)))
-                      : null,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF2C3E50).withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 25),
+                // Avatar with subtle gold border
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(1.5),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFD4AF37), Color(0xFFE8D5B7)],
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 18, 
+                      backgroundColor: const Color(0xFFF8F6F1),
+                      backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
+                      child: imageUrl == null 
+                          ? Text(
+                              dn.isNotEmpty ? dn[0].toUpperCase() : '?',
+                              style: GoogleFonts.playfairDisplay(
+                                fontSize: 14 ,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF2C3E50),
+                              ),
+                            )
+                          : null,
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        dn,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.playfairDisplay(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
-                      ),
-                      const SizedBox(height: 2),
-                      if (showCat)
+                const SizedBox(height: 6),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                         Text(
-                          dc,
+                          dn,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.lato(fontSize: 9, color: const Color(0xFF6B7280), fontWeight: FontWeight.w500),
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF2C3E50),
+                          ),
                         ),
-                      const SizedBox(height: 4),
-                      Flexible(
-                        child: Text(
-                          'Quality products & services.',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.lato(fontSize: 9, color: const Color(0xFF9CA3AF), height: 1.2),
-                        ),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        if (showCat)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2C3E50).withOpacity(0.06),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              dc,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.lato(
+                                fontSize: 8,
+                                color: const Color(0xFF6B7280),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+              ],
+            ),
+            // Bookmark icon for pinned sellers
+            if (_tabIndex == 0)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: GestureDetector(
+                  onTap: () async {
+                    if (s.id != null) {
+                       try {
+                         await ApiService().unpinSeller(s.id!);
+                       } catch (e) {
+                         print('Failed to unpin seller: $e');
+                       }
+                    }
+                    await UserPreferences().toggleSavedSeller(s);
+                    _load();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD4AF37).withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.bookmark,
+                      size: 10,
+                      color: Color(0xFFD4AF37),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-            ],
-          ),
-          if (_tabIndex == 0) // Only show heart in Saved Bizz tab (or both? User said "saved Bizz mein... show ho")
-          Positioned(
-            top: 6,
-            right: 6,
-            child: InkWell(
-              onTap: () async {
-                // Unsave logic for Profile Screen
-                if (s.id != null) {
-                   try {
-                     // Assuming we only show saved items here, tapping heart should probably unsave it
-                     // But let's check if it's already saved (it should be)
-                     await ApiService().unpinSeller(s.id!);
-                   } catch (e) {
-                     print('Failed to unpin seller: $e');
-                   }
-                }
-                await UserPreferences().toggleSavedSeller(s);
-                _load(); // Refresh list
-              },
-              child: const Icon(
-                Icons.favorite,
-                size: 14,
-                color: Color(0xFFCDDC39),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 
@@ -598,6 +778,104 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     _address.text = ta.text.trim();
                                     _profileImagePath = localImagePath.trim();
                                     await _save();
+                                    try {
+                                      final fullname = _name.text.trim();
+                                      if (fullname.length < 3 || fullname.length > 100) {
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Name must be between 3 and 100 characters')),
+                                          );
+                                        }
+                                        return;
+                                      }
+                                      String? filePath;
+                                      if (_profileImagePath.isNotEmpty) {
+                                        final f = File(_profileImagePath);
+                                        if (!await f.exists()) {
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text('Selected image not found on device')),
+                                            );
+                                          }
+                                          return;
+                                        }
+                                        filePath = _profileImagePath;
+                                      }
+                                      final updateRes = await ApiService().updateAccountProfile(
+                                        fullname: fullname,
+                                        filePath: filePath,
+                                      );
+                                      // Optionally refresh posts
+                                      try {
+                                        await ApiService().getSellerPosts();
+                                      } catch (_) {}
+                                      try {
+                                        final data0 = updateRes['data'] ?? updateRes;
+                                        var data = data0;
+                                        if (data is Map && data['user_account'] == null && data['user'] == null && data['account'] == null) {
+                                          final prof = await ApiService().getAccountProfile();
+                                          data = prof['data'] ?? prof;
+                                        }
+                                        final user = (data is Map) ? (data['user_account'] ?? data['user'] ?? data['account']) : null;
+                                        String? pictureUrl;
+                                        if (user is Map) {
+                                          final pu = user['picture_url']?.toString();
+                                          if (pu != null && pu.isNotEmpty) {
+                                            pictureUrl = pu.startsWith('http') ? pu : 'https://www.jayantslist.com$pu';
+                                          }
+                                          final fullnameServer = user['fullname']?.toString();
+                                          if (fullnameServer != null && fullnameServer.isNotEmpty) {
+                                            _name.text = fullnameServer;
+                                          }
+                                        }
+                                        final prefs = await SharedPreferences.getInstance();
+                                        if (pictureUrl != null && pictureUrl.isNotEmpty) {
+                                          final ts = DateTime.now().millisecondsSinceEpoch;
+                                          final sep = pictureUrl.contains('?') ? '&' : '?';
+                                          final busted = '$pictureUrl${sep}v=$ts';
+                                          await prefs.setString('user_picture_url', busted);
+                                          setState(() {
+                                            _pictureUrl = busted;
+                                          });
+                                        }
+                                      } catch (_) {}
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Profile updated on server', style: GoogleFonts.lato(fontSize: 12))),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      final msg = e.toString();
+                                      final isDefaultUnlinkError = msg.contains('ENOENT') && (msg.contains('default.jpg') || msg.contains('unlink'));
+                                      if (isDefaultUnlinkError) {
+                                        try {
+                                          final prof = await ApiService().getAccountProfile();
+                                          final data = prof['data'] ?? prof;
+                                          final user = (data is Map) ? (data['user_account'] ?? data['user'] ?? data['account']) : null;
+                                          String? pictureUrl;
+                                          if (user is Map) {
+                                            final pu = user['picture_url']?.toString();
+                                            if (pu != null && pu.isNotEmpty) {
+                                              pictureUrl = pu.startsWith('http') ? pu : 'https://www.jayantslist.com$pu';
+                                            }
+                                          }
+                                          if (pictureUrl != null && pictureUrl.isNotEmpty) {
+                                            final prefs = await SharedPreferences.getInstance();
+                                            final ts = DateTime.now().millisecondsSinceEpoch;
+                                            final sep = pictureUrl.contains('?') ? '&' : '?';
+                                            final busted = '$pictureUrl${sep}v=$ts';
+                                            await prefs.setString('user_picture_url', busted);
+                                            if (mounted) {
+                                              setState(() {
+                                                _pictureUrl = busted;
+                                              });
+                                            }
+                                          }
+                                        } catch (_) {}
+                                      } else {
+                                        // Silent failure: no user-facing error message
+                                      }
+                                    }
                                     if (mounted) setState(() {});
                                     if (context.mounted) Navigator.of(context).pop();
                                   },
@@ -663,5 +941,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       },
     );
+  }
+
+  Future<void> _autoSaveProfileImage(String path) async {
+    try {
+      final f = File(path);
+      if (!await f.exists()) {
+        return;
+      }
+      var fullname = _name.text.trim();
+      if (fullname.length < 3 || fullname.length > 100) {
+        final email = _email.text.trim();
+        fullname = email.isNotEmpty ? email.split('@').first : 'User';
+      }
+      final res = await ApiService().updateAccountProfile(
+        fullname: fullname,
+        filePath: path,
+      );
+      final data = res['data'] ?? res;
+      final user = (data is Map) ? (data['user_account'] ?? data['user'] ?? data['account']) : null;
+      String? pictureUrl;
+      if (user is Map) {
+        final pu = user['picture_url']?.toString();
+        if (pu != null && pu.isNotEmpty) {
+          pictureUrl = pu.startsWith('http') ? pu : 'https://www.jayantslist.com$pu';
+        }
+      }
+      if (pictureUrl != null && pictureUrl.isNotEmpty) {
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        final sep = pictureUrl.contains('?') ? '&' : '?';
+        final busted = '$pictureUrl${sep}v=$ts';
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_picture_url', busted);
+        if (mounted) {
+          setState(() {
+            _pictureUrl = busted;
+          });
+        }
+      }
+    } catch (_) {
+      // Silent: no snackbar
+    }
   }
 }

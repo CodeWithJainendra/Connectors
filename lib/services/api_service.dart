@@ -137,16 +137,40 @@ class ApiService {
       'query': query,
     };
     print('🌐 API Call: POST $url Body: $body');
-    
-    final response = await _authenticatedRequest(
-      () async => http.post(
-        Uri.parse(url),
-        headers: await _getHeaders(),
-        body: jsonEncode(body),
-      ),
+    final res = await http.post(
+      Uri.parse(url),
+      headers: await _getHeaders(),
+      body: jsonEncode(body),
     );
-    // Response structure: { success: true, data: { shops: [...] } }
-    return response['data'] ?? {};
+    if (res.statusCode >= 200 && res.statusCode < 300) {
+      try {
+        final parsed = jsonDecode(res.body);
+        if (parsed is List) {
+          return {'shops': parsed};
+        } else if (parsed is Map<String, dynamic>) {
+          final data = parsed['data'];
+          if (data is Map && data['shops'] is List) {
+            return {'shops': data['shops']};
+          }
+          if (parsed['shops'] is List) {
+            return {'shops': parsed['shops']};
+          }
+          return parsed;
+        } else {
+          throw Exception('Unexpected search response type');
+        }
+      } catch (e) {
+        throw Exception('Invalid JSON response from server');
+      }
+    } else {
+      try {
+        final err = jsonDecode(res.body);
+        final msg = (err is Map) ? (err['message'] ?? err['error'] ?? 'Search failed') : 'Search failed';
+        throw Exception(msg);
+      } catch (_) {
+        throw Exception('Search failed: ${res.statusCode}');
+      }
+    }
   }
 
   // User Actions
@@ -265,6 +289,45 @@ class ApiService {
       body: jsonEncode(body),
     );
 
+    return _handleResponse(response);
+  }
+
+  Future<List<dynamic>> getSellerPosts() async {
+    final headers = await _getHeaders(auth: true);
+    final response = await http.get(
+      Uri.parse('$baseUrl/sellers/posts'),
+      headers: headers,
+    );
+    final data = _handleResponse(response);
+    return data['data']?['posts'] ?? data['posts'] ?? [];
+  }
+
+  Future<Map<String, dynamic>> updateAccountProfile({required String fullname, String? filePath}) async {
+    final token = await authToken;
+    if (token == null) {
+      throw Exception('Authentication required');
+    }
+
+    final uri = Uri.parse('$baseUrl/accounts/profile');
+    final request = http.MultipartRequest('PUT', uri);
+    request.headers['Authorization'] = 'Bearer $token';
+    request.fields['fullname'] = fullname;
+    if (filePath != null && filePath.isNotEmpty) {
+      final file = await http.MultipartFile.fromPath('file', filePath);
+      request.files.add(file);
+    }
+
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+    return _handleResponse(response);
+  }
+
+  Future<Map<String, dynamic>> getAccountProfile() async {
+    final headers = await _getHeaders(auth: true);
+    final response = await http.get(
+      Uri.parse('$baseUrl/accounts/profile'),
+      headers: headers,
+    );
     return _handleResponse(response);
   }
 

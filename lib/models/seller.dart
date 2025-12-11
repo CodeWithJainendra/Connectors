@@ -10,6 +10,7 @@ class Seller {
   final String? imageUrl;
   final String? phoneNumber;
   final String? description;
+  final String? categoryImageUrl;
 
   const Seller({
     this.id,
@@ -19,12 +20,16 @@ class Seller {
     this.imageUrl,
     this.phoneNumber,
     this.description,
+    this.categoryImageUrl,
   });
 
   factory Seller.fromJson(Map<String, dynamic> json) {
     String cat = 'Service';
+    String? catImageUrl;
+    
     if (json['category'] is Map) {
       cat = json['category']['name']?.toString() ?? 'Service';
+      catImageUrl = json['category']['picture_url']?.toString();
     } else {
       cat = json['category']?.toString() ?? 'Service';
     }
@@ -40,6 +45,7 @@ class Seller {
       imageUrl: json['picture_url'] ?? json['imageUrl'] ?? json['profile_image_url'],
       phoneNumber: json['contact_no'] ?? json['mobile_number'] ?? json['phone_number'] ?? json['phone'] ?? json['contact_number'],
       description: json['description'] ?? json['about'],
+      categoryImageUrl: catImageUrl,
     );
   }
 
@@ -53,6 +59,7 @@ class Seller {
       'imageUrl': imageUrl,
       'phone_number': phoneNumber,
       'description': description,
+      'categoryImageUrl': categoryImageUrl,
     };
   }
 }

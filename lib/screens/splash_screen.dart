@@ -4,7 +4,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'onboarding_screen.dart';
+// Onboarding removed - users go directly to login
 import 'login_screen.dart';
 import 'home_screen.dart';
 import '../widgets/elephant_logo.dart';
@@ -60,7 +60,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     if (!mounted) return;
     
     final prefs = await SharedPreferences.getInstance();
-    final hasCompletedOnboarding = prefs.getBool('onboarding_completed') ?? false;
     final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
     final hasAuthToken = prefs.getString('auth_token') != null;
     
@@ -72,12 +71,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     if (isLoggedIn && hasAuthToken) {
       // User is logged in with valid token, go to home
       nextScreen = const HomeScreen();
-    } else if (hasCompletedOnboarding) {
-      // Onboarding done but not logged in, go to login
-      nextScreen = const LoginScreen();
     } else {
-      // First time user, show onboarding
-      nextScreen = const OnboardingScreen();
+      // Not logged in, go directly to login (skip onboarding)
+      nextScreen = const LoginScreen();
     }
     
     // Navigate to appropriate screen

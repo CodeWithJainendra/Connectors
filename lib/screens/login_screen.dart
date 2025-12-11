@@ -86,6 +86,64 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  String _humanizeError(Object error) {
+    String msg = error.toString().replaceAll('Exception: ', '').trim();
+    try {
+      if (msg.startsWith('{') || msg.startsWith('[')) {
+        final decoded = jsonDecode(msg);
+        if (decoded is Map) {
+          final m = decoded['message'] ?? decoded['error'] ?? decoded['detail'];
+          if (m is String && m.trim().isNotEmpty) return m.trim();
+          if (decoded['errors'] is List && (decoded['errors'] as List).isNotEmpty) {
+            final first = (decoded['errors'] as List).first;
+            if (first is String) return first;
+            if (first is Map && first['message'] is String) return first['message'];
+          }
+        }
+        if (decoded is List && decoded.isNotEmpty) {
+          final first = decoded.first;
+          if (first is String) return first;
+        }
+      }
+    } catch (_) {}
+
+    final lower = msg.toLowerCase();
+    if (lower.contains('timeout')) {
+      return 'Request timed out. Please check your internet and try again.';
+    }
+    if (lower.contains('socketexception') || lower.contains('failed host lookup') || lower.contains('connection refused')) {
+      return 'Unable to connect to server. Please check your internet connection.';
+    }
+    if (lower.contains('invalid json') || lower.contains('formatexception')) {
+      return 'Server error. Please try again later.';
+    }
+    if (lower.contains('session expired')) {
+      return 'Session expired. Please sign in again.';
+    }
+    if (lower.contains('invalid otp') || lower.contains('otp invalid')) {
+      return 'The OTP you entered is incorrect.';
+    }
+    if (lower.contains('otp expired')) {
+      return 'The OTP has expired. Please request a new one.';
+    }
+    if (lower.contains('mobile') && lower.contains('required')) {
+      return 'Please enter a valid mobile number.';
+    }
+    if (lower.contains('user not found')) {
+      return 'We could not find an account for this number.';
+    }
+    if (lower.contains('too many requests') || lower.contains('rate limit') || lower.contains('429')) {
+      return 'Too many attempts. Please wait a minute and try again.';
+    }
+    if (RegExp(r'^\{.*\}$').hasMatch(msg) || RegExp(r'^\[.*\]$').hasMatch(msg)) {
+      return 'Something went wrong. Please try again.';
+    }
+    if (msg.isEmpty) {
+      return 'Something went wrong. Please try again.';
+    }
+    return msg;
+  }
+
   void _showCountryPicker() {
     showCountryPicker(
       context: context,
@@ -154,7 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(error.toString().replaceAll('Exception: ', '')),
+              content: Text(_humanizeError(error)),
               backgroundColor: Colors.red,
             ),
           );
@@ -230,7 +288,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))),
+        SnackBar(content: Text(_humanizeError(e))),
       );
     }
   }

@@ -10,6 +10,8 @@ import 'dart:convert';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import 'dart:math' as math;
+import 'dart:ui' as ui;
+import 'dart:async';
 import 'login_screen.dart';
 import 'profile_screen.dart';
 import 'settings_screen.dart';
@@ -20,7 +22,8 @@ import '../services/user_preferences.dart';
 import '../models/seller.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int initialLocationViewIndex;
+  const HomeScreen({super.key, this.initialLocationViewIndex = 1});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -59,8 +62,12 @@ class _HomeScreenState extends State<HomeScreen> {
   String _searchQuery = '';
   Set<String> _selectedLetters = {};
   final List<String> _allCategories = const []; // We will use _apiCategories instead
-  double? _distanceLimitKm;
+  double? _distanceLimitKm = 50.0;
+  Timer? _debounceTimer;
   int _locationViewIndex = 1;
+  Timer? _searchDebounce;
+  Timer? _locationDebounce;
+  Timer? _sellerLoadDebounce;
   int _notificationCount = 3;
   final List<String> _notifications = const [
     'New offer near you',
@@ -71,6 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<String> _apiCategories = [];
   bool _apiCatsLoading = false;
   String? _apiCatsError;
+  Map<String, String> _apiCatCodes = {};
 
   // Grid Category Hierarchy State
   List<Map<String, dynamic>> _gridCategories = [];
@@ -111,6 +119,182 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Center(child: Icon(icon, size: 18, color: const Color(0xFF1A1A1A))),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _chipButton(String label, VoidCallback onTap) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFCDDC39), width: 1),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            child: Text(
+              label,
+              style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<List<Polygon>> _loadIndiaPolygons() async {
+    try {
+      final raw = await rootBundle.loadString('assets/images/Maps/INDIA_STATES.geojson');
+      final data = json.decode(raw);
+      final features = (data['features'] as List?) ?? const [];
+      final List<Polygon> polygons = [];
+      for (final f in features) {
+        final geom = f['geometry'] ?? {};
+        final type = geom['type'];
+        final coords = geom['coordinates'];
+        Color fill = const Color(0xFFE8F5E9);
+        Color border = const Color(0xFF1A1A1A).withOpacity(0.25);
+        double stroke = 0.7;
+        if (type == 'Polygon') {
+          final rings = (coords as List); // [outer, holes...]
+          if (rings.isNotEmpty) {
+            final outer = (rings.first as List);
+            final points = outer.map<LatLng>((p) => LatLng((p[1] as num).toDouble(), (p[0] as num).toDouble())).toList();
+            polygons.add(Polygon(points: points, color: fill, borderColor: border, borderStrokeWidth: stroke, isFilled: true));
+          }
+        } else if (type == 'MultiPolygon') {
+          final polys = (coords as List); // [[rings], [rings]...]
+          for (final poly in polys) {
+            final rings = (poly as List);
+            if (rings.isNotEmpty) {
+              final outer = (rings.first as List);
+              final points = outer.map<LatLng>((p) => LatLng((p[1] as num).toDouble(), (p[0] as num).toDouble())).toList();
+              polygons.add(Polygon(points: points, color: fill, borderColor: border, borderStrokeWidth: stroke, isFilled: true));
+            }
+          }
+        }
+      }
+      return polygons;
+    } catch (e) {
+      print('Failed to load India GeoJSON: $e');
+      return [];
+    }
+  }
+
+  void _openIndiaMap() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) {
+          final indiaCenter = const LatLng(22.9734, 78.6569);
+          final controller = MapController();
+          final sellers = _nearbySellers(categories: _selectedCategories.isNotEmpty ? _selectedCategories : null);
+          return Scaffold(
+            backgroundColor: const Color(0xFFFAF7F0),
+            appBar: AppBar(
+              elevation: 0,
+              backgroundColor: const Color(0xFFFAF7F0),
+              foregroundColor: const Color(0xFF1A1A1A),
+              title: Text('India Map', style: GoogleFonts.lato(fontSize: 16, fontWeight: FontWeight.w700)),
+            ),
+            body: FutureBuilder<List<Polygon>>(
+              future: _loadIndiaPolygons(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final polygons = snapshot.data!;
+                return Stack(
+                  children: [
+                    FlutterMap(
+                      mapController: controller,
+                      options: MapOptions(
+                        initialCenter: indiaCenter,
+                        initialZoom: 4.5,
+                        minZoom: 3.0,
+                        maxZoom: 18.0,
+                        interactionOptions: const InteractionOptions(
+                          enableScrollWheel: true,
+                          enableMultiFingerGestureRace: true,
+                        ),
+                        onMapEvent: (event) {
+                          final c = controller.camera.center;
+                          const minLat = 6.0, minLng = 68.0, maxLat = 37.5, maxLng = 97.0;
+                          double clampedLat = c.latitude;
+                          double clampedLng = c.longitude;
+                          if (c.latitude < minLat) clampedLat = minLat;
+                          if (c.latitude > maxLat) clampedLat = maxLat;
+                          if (c.longitude < minLng) clampedLng = minLng;
+                          if (c.longitude > maxLng) clampedLng = maxLng;
+                          if (clampedLat != c.latitude || clampedLng != c.longitude) {
+                            controller.move(LatLng(clampedLat, clampedLng), controller.camera.zoom);
+                          }
+                        },
+                      ),
+                      children: [
+                        PolygonLayer(polygons: polygons),
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: _currentPosition,
+                              width: 64,
+                              height: 64,
+                              child: const Icon(
+                                Icons.my_location,
+                                size: 24,
+                                color: Color(0xFFFF5252),
+                              ),
+                            ),
+                            ...sellers.map((s) => Marker(
+                                  point: s.position,
+                                  width: 64,
+                                  height: 64,
+                                  child: const Icon(
+                                    Icons.location_on,
+                                    size: 22,
+                                    color: Color(0xFF1A1A1A),
+                                  ),
+                                )),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Positioned(
+                      top: 12,
+                      right: 12,
+                      child: Column(
+                        children: [
+                          _zoomButton(Icons.add, () {
+                            final currentZoom = controller.camera.zoom;
+                            final newZoom = math.min(18.0, currentZoom + 1);
+                            controller.move(controller.camera.center, newZoom);
+                          }),
+                          const SizedBox(height: 8),
+                          _zoomButton(Icons.remove, () {
+                            final currentZoom = controller.camera.zoom;
+                            final newZoom = math.max(3.0, currentZoom - 1);
+                            controller.move(controller.camera.center, newZoom);
+                          }),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          );
+        },
       ),
     );
   }
@@ -389,15 +573,17 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.transparent,
       isDismissible: true,
       builder: (context) {
-        int selectedIndex;
-        if (_distanceLimitKm == null) {
-          selectedIndex = 3;
-        } else if ((_distanceLimitKm ?? 0) < 1.0) {
-          selectedIndex = 0;
-        } else if (_distanceLimitKm == 1.0) {
-          selectedIndex = 1;
-        } else {
-          selectedIndex = 2;
+        int selectedIndex = -1; // Default to none (Custom)
+        final limit = _distanceLimitKm;
+        
+        if (limit == null) {
+          selectedIndex = 3; // Any
+        } else if (limit < 1.0) {
+          selectedIndex = 0; // < 1 km
+        } else if ((limit - 1.0).abs() < 0.1) {
+          selectedIndex = 1; // 1 km
+        } else if ((limit - 5.0).abs() < 0.1) {
+          selectedIndex = 2; // 5 km
         }
         return StatefulBuilder(
           builder: (context, sbSetState) {
@@ -557,23 +743,458 @@ class _HomeScreenState extends State<HomeScreen> {
     return MediaQuery.of(context).padding.bottom;
   }
 
+  double _navBarPadding(BuildContext context) {
+    return 58.0 + MediaQuery.of(context).padding.bottom + 6.0;
+  }
+
+  Widget _bottomBlurOverlay() {
+    return IgnorePointer(
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            height: _navBarPadding(context),
+            color: const Color(0xFFFAF7F0).withOpacity(0.6),
+          ),
+        ),
+      ),
+    );
+  }
+
   List<Seller> _nearbySellers({Set<String>? categories}) {
     final d = Distance();
-    final Set<String>? catsLower = categories?.map((e) => _norm(e)).toSet();
+    // We rely on backend filtering for categories AND distance.
+    // Only support local text search for instant filtering UX.
+    // Don't re-filter by distance here as API already returned distance-filtered results.
+    
     final filtered = _sellers.where((s) {
       final name = _clean(s.name);
-      final okCat = catsLower == null || catsLower.contains(_norm(s.category));
-      final okLetter = _selectedLetters.isEmpty || _selectedLetters.contains(name.isNotEmpty ? name[0].toUpperCase() : '');
-      final okQuery = _searchQuery.isEmpty || name.toLowerCase().contains(_searchQuery.toLowerCase());
-      final meters = d.as(LengthUnit.Meter, _currentPosition, s.position);
-      final okDistance = _distanceLimitKm == null || meters <= (_distanceLimitKm! * 1000);
-      return okCat && okLetter && okQuery && okDistance;
+      // Only filter by search query if user typed something
+      final okQuery = _searchQuery.isEmpty || 
+          name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          _clean(s.category).toLowerCase().contains(_searchQuery.toLowerCase());
+      return okQuery;
     }).toList();
+    
+    // Sort by distance from user
     filtered.sort((a, b) => d.as(LengthUnit.Meter, _currentPosition, a.position)
         .compareTo(d.as(LengthUnit.Meter, _currentPosition, b.position)));
     return filtered;
   }
 
+  Future<void> _updateDistanceBasedOnMapBounds() async {
+    // Get visible bounds
+    final bounds = _mapController.camera.visibleBounds;
+    final center = _mapController.camera.center;
+    final northEast = bounds.northEast;
+
+    // Calculate distance from center to corner (radius of view)
+    final distance = const Distance().as(LengthUnit.Kilometer, center, northEast);
+    
+    // Logic: 
+    // Bidirectional update: If user zooms/pans, update the filter to match the view.
+    // This allows exploring beyond OR within the initial/manual filter.
+    
+    final currentLimit = _distanceLimitKm ?? 50.0;
+    
+    // Only update if significantly different (> 15% change or > 5km) to avoid constant reloads
+    // on small movements.
+    final diff = (distance - currentLimit).abs();
+    final isSignificant = diff > (currentLimit * 0.15) || diff > 5.0;
+
+    if (isSignificant) {
+      print('🗺️ Map interaction detected. Updating search radius to ${distance.toStringAsFixed(1)} km (was ${currentLimit.toStringAsFixed(1)} km)');
+      
+      // Update filter to match view (with buffer). 
+      // This allows the map view to drive the search radius.
+      setState(() {
+        _distanceLimitKm = distance + (distance * 0.1); // +10% buffer
+        // Maintain a reasonable minimum
+        if (_distanceLimitKm! < 1.0) _distanceLimitKm = 1.0;
+        _sellersLoading = true;
+      });
+      
+      // Load sellers with the new distance limit
+      await _loadArtisansNearby();
+      if (mounted) {
+        setState(() {
+          _sellersLoading = false;
+        });
+      }
+    }
+  }
+
+
+  // Helper to check if an image URL is a default placeholder
+  bool _isDefaultPlaceholder(String? url) {
+    if (url == null || url.isEmpty) return true;
+    final lowerUrl = url.toLowerCase();
+    return lowerUrl.contains('default.jpg') || 
+           lowerUrl.contains('default.svg') || 
+           lowerUrl.contains('default.png') ||
+           lowerUrl.contains('/default');
+  }
+
+  Marker _buildSellerMarker(Seller s) {
+    final isSelected = _selectedSeller == s;
+    
+    // Construct full image URL if needed (for shop profile picture)
+    // Skip default placeholder images
+    String? imageUrl = s.imageUrl;
+    if (imageUrl != null && !imageUrl.startsWith('http')) {
+      imageUrl = 'https://www.jayantslist.com$imageUrl';
+    }
+    if (_isDefaultPlaceholder(imageUrl)) {
+      imageUrl = null;
+    }
+    
+    // Construct full category image URL if needed
+    // Skip default placeholder images
+    String? categoryImageUrl = s.categoryImageUrl;
+    if (categoryImageUrl != null && !categoryImageUrl.startsWith('http')) {
+      categoryImageUrl = 'https://www.jayantslist.com$categoryImageUrl';
+    }
+    if (_isDefaultPlaceholder(categoryImageUrl)) {
+      categoryImageUrl = null;
+    }
+
+    return Marker(
+      point: s.position,
+      width: 150,
+      height: 100,
+      alignment: Alignment.bottomCenter,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isSelected)
+            SizedBox(
+              width: 140,
+              height: 54,
+              child: InkWell(
+                onTap: () async {
+                  final isSaved = _savedBiz.contains(s.name);
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SellerDetailScreen(
+                        seller: s,
+                        isSaved: isSaved,
+                        userPosition: _currentPosition,
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFAF7F0),
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Profile picture with proper error handling
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFFE5E7EB),
+                      ),
+                      clipBehavior: Clip.hardEdge,
+                      child: (imageUrl != null && imageUrl.isNotEmpty)
+                          ? Image.network(
+                              imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Center(
+                                  child: Text(
+                                    s.name.isNotEmpty ? s.name[0].toUpperCase() : '?',
+                                    style: GoogleFonts.lato(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          : Center(
+                              child: Text(
+                                s.name.isNotEmpty ? s.name[0].toUpperCase() : '?',
+                                style: GoogleFonts.lato(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF6B7280),
+                                ),
+                              ),
+                            ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _clean(s.name),
+                            style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            _clean(s.category),
+                            style: GoogleFonts.lato(fontSize: 9, color: const Color(0xFF4A4A4A)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Align(
+                            alignment: Alignment.bottomLeft,
+                            child: Text('More Info', style: GoogleFonts.lato(fontSize: 9, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                ),
+              ),
+            )
+          else
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedSeller = s;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCDDC39),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFF1A1A1A), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                // Show category image if available, otherwise show storefront icon
+                child: (categoryImageUrl != null && categoryImageUrl.isNotEmpty)
+                    ? ClipOval(
+                        child: Image.network(
+                          categoryImageUrl,
+                          width: 18,
+                          height: 18,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(
+                              Icons.storefront,
+                              size: 14,
+                              color: Color(0xFF1A1A1A),
+                            );
+                          },
+                        ),
+                      )
+                    : const Icon(
+                        Icons.storefront,
+                        size: 14,
+                        color: Color(0xFF1A1A1A),
+                      ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // Helper to build marker at a custom position (for handling overlapping markers)
+  Marker _buildSellerMarkerAt(Seller s, LatLng position) {
+    final isSelected = _selectedSeller == s;
+    
+    // Construct full image URL if needed (for shop profile picture)
+    // Skip default placeholder images
+    String? imageUrl = s.imageUrl;
+    if (imageUrl != null && !imageUrl.startsWith('http')) {
+      imageUrl = 'https://www.jayantslist.com$imageUrl';
+    }
+    if (_isDefaultPlaceholder(imageUrl)) {
+      imageUrl = null;
+    }
+    
+    // Construct full category image URL if needed
+    // Skip default placeholder images
+    String? categoryImageUrl = s.categoryImageUrl;
+    if (categoryImageUrl != null && !categoryImageUrl.startsWith('http')) {
+      categoryImageUrl = 'https://www.jayantslist.com$categoryImageUrl';
+    }
+    if (_isDefaultPlaceholder(categoryImageUrl)) {
+      categoryImageUrl = null;
+    }
+
+    return Marker(
+      point: position, // Use provided position (may be offset)
+      width: 150,
+      height: 100,
+      alignment: Alignment.bottomCenter,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isSelected)
+            SizedBox(
+              width: 140,
+              height: 54,
+              child: InkWell(
+                onTap: () async {
+                  final isSaved = _savedBiz.contains(s.name);
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SellerDetailScreen(
+                        seller: s,
+                        isSaved: isSaved,
+                        userPosition: _currentPosition,
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFAF7F0),
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.12),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Profile picture with proper error handling
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFFE5E7EB),
+                        ),
+                        clipBehavior: Clip.hardEdge,
+                        child: (imageUrl != null && imageUrl.isNotEmpty)
+                            ? Image.network(
+                                imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Center(
+                                    child: Text(
+                                      s.name.isNotEmpty ? s.name[0].toUpperCase() : '?',
+                                      style: GoogleFonts.lato(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF6B7280),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                            : Center(
+                                child: Text(
+                                  s.name.isNotEmpty ? s.name[0].toUpperCase() : '?',
+                                  style: GoogleFonts.lato(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF6B7280),
+                                  ),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _clean(s.name),
+                              style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              _clean(s.category),
+                              style: GoogleFonts.lato(fontSize: 9, color: const Color(0xFF4A4A4A)),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Align(
+                              alignment: Alignment.bottomLeft,
+                              child: Text('More Info', style: GoogleFonts.lato(fontSize: 9, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedSeller = s;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCDDC39),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFF1A1A1A), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                // Show category image if available, otherwise show storefront icon
+                child: (categoryImageUrl != null && categoryImageUrl.isNotEmpty)
+                    ? ClipOval(
+                        child: Image.network(
+                          categoryImageUrl,
+                          width: 18,
+                          height: 18,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Icon(
+                              Icons.storefront,
+                              size: 14,
+                              color: Color(0xFF1A1A1A),
+                            );
+                          },
+                        ),
+                      )
+                    : const Icon(
+                        Icons.storefront,
+                        size: 14,
+                        color: Color(0xFF1A1A1A),
+                      ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _fetchApiCategories() async {
     if (_apiCatsLoading) return;
@@ -582,15 +1203,21 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {});
     try {
       final list = await ApiService().getCategories();
-      final names = list
-          .map((e) => e['name']?.toString() ?? '')
-          .where((s) => s.isNotEmpty)
-          .toSet()
-          .toList();
+      final names = <String>[];
+      _apiCatCodes.clear();
+      for (final e in list) {
+        final name = e['name']?.toString() ?? '';
+        if (name.isEmpty) continue;
+        names.add(name);
+        final h = e['hcode']?.toString();
+        if (h != null && h.isNotEmpty) {
+          _apiCatCodes[_norm(name)] = h;
+        }
+      }
       _apiCategories = names;
       try {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('cached_categories', json.encode(names));
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('cached_categories', json.encode(names));
       } catch (_) {}
     } catch (_) {
       _apiCatsError = 'Unable to fetch categories';
@@ -650,17 +1277,36 @@ class _HomeScreenState extends State<HomeScreen> {
         // Update location first as per API requirement
         await ApiService().updateLocation(_currentPosition.latitude, _currentPosition.longitude);
 
+        String? catParam;
+        if (_selectedCategories.isNotEmpty) {
+          final sel = _selectedCategories.first;
+          catParam = _apiCatCodes[_norm(sel)] ?? sel;
+        }
+        
         entries = await ApiService().getNearbySellers(
           maxDistance: (_distanceLimitKm ?? 50.0) * 1000, // Convert km to meters
+          catHcode: catParam,
         );
         print('✅ Authenticated API returned ${entries.length} sellers');
+        // Fallback: if category selected and nearby endpoint returns empty, try search API
+        if (entries.isEmpty && _selectedCategories.isNotEmpty) {
+          try {
+            final query = _selectedCategories.first;
+            final searchResult = await ApiService().search(query, maxDistance: (_distanceLimitKm ?? 50.0) * 1000);
+            entries = searchResult['shops'] ?? [];
+            print('🔁 Fallback search for category "$query" returned ${entries.length} shops');
+          } catch (e3) {
+            print('❌ Fallback search failed: $e3');
+          }
+        }
       } catch (e) {
         print('⚠️ Failed to load nearby sellers (Authenticated): $e');
         errorMessage = e.toString();
         print('🔄 Falling back to search API...');
         try {
-          // Try search with empty query as fallback
-          final searchResult = await ApiService().search('', maxDistance: (_distanceLimitKm ?? 50.0) * 1000);
+          // Try search with selected category name as query if available
+          final query = _selectedCategories.isNotEmpty ? _selectedCategories.first : '';
+          final searchResult = await ApiService().search(query, maxDistance: (_distanceLimitKm ?? 50.0) * 1000);
           entries = searchResult['shops'] ?? [];
           print('✅ Search API returned ${entries.length} shops');
           errorMessage = null; // Clear error if search succeeds
@@ -673,9 +1319,6 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       
       final d = Distance();
-      final bool anyDistance = _distanceLimitKm == null;
-      double limitKm = anyDistance ? double.infinity : (_distanceLimitKm ?? 50.0);
-      final selectedCats = _selectedCategories;
       final List<Seller> artisans = [];
       
       for (final e in entries) {
@@ -695,10 +1338,8 @@ class _HomeScreenState extends State<HomeScreen> {
         if (lat == null || lon == null) continue;
         
         final pos = LatLng(lat, lon);
-        final meters = d.as(LengthUnit.Meter, _currentPosition, pos);
-        
-        // Filter by distance
-        if (!anyDistance && meters > limitKm * 1000) continue;
+        // API already filters by distance, no need to re-filter locally
+        // This was causing mismatch since _currentPosition might differ from backend's stored location
         
         // Parse Name
         String name = (e['shop_name'] ?? e['business_name'] ?? e['artisan_name'] ?? e['name'] ?? '').toString();
@@ -706,31 +1347,29 @@ class _HomeScreenState extends State<HomeScreen> {
         
         // Parse Category
         String cat = 'Service';
+        String? categoryImageUrl;
         if (e['categories'] != null && (e['categories'] as List).isNotEmpty) {
           // Authenticated API format
           cat = e['categories'][0]['name']?.toString() ?? 'Service';
+          categoryImageUrl = e['categories'][0]['picture_url']?.toString();
         } else if (e['service_category'] != null) {
           // Public API format: service_category object
           final sc = e['service_category'];
           if (sc is Map) {
-             // Try to find a name in serviceSubCategory -> service -> serviceName
-             // Or just use a generic name if structure is complex
-             // For now, let's try to extract something meaningful or default
-             // The log showed: service_category: { serviceCategoryId: "2", serviceSubCategory: [...] }
-             // It doesn't seem to have a direct name field in the log snippet.
-             // Let's check if there's a 'name' field in service_category
              cat = sc['serviceCategoryName']?.toString() ?? 'Service';
+             categoryImageUrl = sc['picture_url']?.toString();
           }
         } else {
           final rawCat = e['category'];
           if (rawCat is Map) {
             cat = rawCat['name']?.toString() ?? 'Service';
+            categoryImageUrl = rawCat['picture_url']?.toString();
           } else {
             cat = (rawCat ?? e['service_name'] ?? 'Service').toString();
           }
         }
         
-        if (selectedCats.isNotEmpty && !selectedCats.contains(_clean(cat))) continue;
+        // Do not hard-filter locally by category; rely on backend filtering
         
         // Parse ID
         int? id;
@@ -751,14 +1390,27 @@ class _HomeScreenState extends State<HomeScreen> {
           imageUrl: imageUrl,
           phoneNumber: phone,
           description: desc,
+          categoryImageUrl: categoryImageUrl,
         ));
       }
       
-      artisans.sort((a, b) => d.as(LengthUnit.Meter, _currentPosition, a.position)
+      // Remove duplicates based on ID or Name+Location
+      final uniqueArtisans = <String, Seller>{};
+      for (final a in artisans) {
+        final key = a.id != null ? 'id_${a.id}' : '${a.name}_${a.position.latitude}_${a.position.longitude}';
+        uniqueArtisans[key] = a;
+      }
+      
+      final finalSellers = uniqueArtisans.values.toList();
+
+      finalSellers.sort((a, b) => d.as(LengthUnit.Meter, _currentPosition, a.position)
           .compareTo(d.as(LengthUnit.Meter, _currentPosition, b.position)));
           
-      _sellers = artisans.take(90).toList();
-      print('✅ Loaded ${_sellers.length} sellers after filtering');
+      _sellers = finalSellers;
+      print('✅ Loaded ${_sellers.length} unique sellers after filtering (from ${entries.length} API entries)');
+      
+      // Force UI update
+      if (mounted) setState(() {});
       
       // Show error notification if backend failed and no sellers found
       if (_sellers.isEmpty && errorMessage != null && mounted) {
@@ -780,26 +1432,6 @@ class _HomeScreenState extends State<HomeScreen> {
               behavior: SnackBarBehavior.floating,
               margin: EdgeInsets.only(
                 bottom: MediaQuery.of(context).size.height - 200,
-                left: 20,
-                right: 20,
-              ),
-            ),
-          );
-        });
-      } else if (_sellers.isEmpty && mounted) {
-        // No backend error, just no sellers in range
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'No sellers found in this range',
-                style: GoogleFonts.lato(fontSize: 13),
-              ),
-              backgroundColor: const Color(0xFF4A4A4A),
-              duration: const Duration(seconds: 2),
-              behavior: SnackBarBehavior.floating,
-              margin: EdgeInsets.only(
-                bottom: MediaQuery.of(context).size.height - 180,
                 left: 20,
                 right: 20,
               ),
@@ -870,7 +1502,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+    _locationViewIndex = widget.initialLocationViewIndex;
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: const [SystemUiOverlay.top, SystemUiOverlay.bottom]);
     _checkLocationPermission();
     _loadRole();
     _loadCachedCategories();
@@ -916,6 +1549,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchDebounce?.cancel();
+    _locationDebounce?.cancel();
+    _sellerLoadDebounce?.cancel();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: const [SystemUiOverlay.top, SystemUiOverlay.bottom]);
     super.dispose();
   }
@@ -1040,23 +1676,22 @@ class _HomeScreenState extends State<HomeScreen> {
               TextField(
                 controller: searchController,
                 onChanged: (value) async {
-                  if (value.isEmpty) {
-                    setModalState(() {
-                      filteredLocations = [];
-                      isLoading = false;
-                    });
-                  } else {
-                    setModalState(() {
-                      isLoading = true;
-                    });
-                    
-                    final suggestions = await _getPlaceSuggestions(value);
-                    
-                    setModalState(() {
-                      filteredLocations = suggestions;
-                      isLoading = false;
-                    });
-                  }
+                  _locationDebounce?.cancel();
+                  _locationDebounce = Timer(const Duration(milliseconds: 400), () async {
+                    if (value.isEmpty) {
+                      setModalState(() {
+                        filteredLocations = [];
+                        isLoading = false;
+                      });
+                    } else {
+                      setModalState(() { isLoading = true; });
+                      final suggestions = await _getPlaceSuggestions(value);
+                      setModalState(() {
+                        filteredLocations = suggestions;
+                        isLoading = false;
+                      });
+                    }
+                  });
                 },
                 style: GoogleFonts.lato(
                   color: const Color(0xFF1A1A1A),
@@ -1601,8 +2236,12 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       setState(() {
-        _currentLocation = 'Unable to get location';
+        _currentLocation = 'Tap Change to set location';
       });
+      // Offer the permission/location chooser to help user fix quickly
+      if (mounted) {
+        Future.delayed(const Duration(milliseconds: 300), () => _showLocationPermissionPopup());
+      }
     }
   }
 
@@ -1613,19 +2252,29 @@ class _HomeScreenState extends State<HomeScreen> {
       extendBody: true,
       appBar: (_selectedIndex == 3) ? null : AppBar(
         centerTitle: false,
-        title: Transform.translate(
-          offset: const Offset(0, -3),
-          child: Text(
-            'Jayantslist',
-            style: GoogleFonts.playfairDisplay(
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1A1A1A),
-            ),
+        automaticallyImplyLeading: false,
+        titleSpacing: 16,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark, // For Android (dark icons)
+          statusBarBrightness: Brightness.light, // For iOS (dark icons)
+          systemNavigationBarColor: Color(0xFFFAF7F0), // Match app background
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
+        title: Text(
+          'Jayantslist',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.playfairDisplay(
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1A1A1A),
           ),
         ),
         backgroundColor: const Color(0xFFFAF7F0),
+        surfaceTintColor: Colors.transparent, // Remove Material 3 tint
+        scrolledUnderElevation: 0, // Remove elevation color change on scroll
         elevation: 0,
-        toolbarHeight: 20,
+        toolbarHeight: 44,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8),
@@ -1817,7 +2466,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   Expanded(
                     child: TextField(
                       controller: _searchController,
-                      onChanged: (v) => setState(() => _searchQuery = v.trim()),
+                      onChanged: (v) {
+                        _searchDebounce?.cancel();
+                        _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+                          if (!mounted) return;
+                          setState(() => _searchQuery = v.trim());
+                        });
+                      },
                       decoration: InputDecoration(
                         hintText: 'Search nearby sellers',
                         hintStyle: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF6B7280)),
@@ -2014,7 +2669,7 @@ class _HomeScreenState extends State<HomeScreen> {
       right: false,
       top: false,
       bottom: true,
-      minimum: const EdgeInsets.only(bottom: 72),
+      minimum: EdgeInsets.only(bottom: _navBarPadding(context)),
       child: SizedBox.expand(
       child: Stack(
         children: [
@@ -2026,7 +2681,16 @@ class _HomeScreenState extends State<HomeScreen> {
               minZoom: 3.0,
               maxZoom: 18.0,
               onTap: (_, __) { if (_selectedSeller != null) setState(() => _selectedSeller = null); },
-              onMapEvent: (event) { if (_selectedSeller != null) setState(() => _selectedSeller = null); },
+              onMapEvent: (event) { 
+                if (_selectedSeller != null) setState(() => _selectedSeller = null); 
+              },
+              onPositionChanged: (position, hasGesture) {
+                if (!hasGesture) return;
+                if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+                _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+                  _updateDistanceBasedOnMapBounds();
+                });
+              },
               interactionOptions: const InteractionOptions(
                 enableScrollWheel: true,
                 enableMultiFingerGestureRace: true,
@@ -2037,19 +2701,65 @@ class _HomeScreenState extends State<HomeScreen> {
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.jayantslist',
               ),
+              // User's current location marker
               MarkerLayer(
                 markers: [
                   Marker(
                     point: _currentPosition,
-                    width: 80,
-                    height: 80,
-                    child: const Icon(
-                      Icons.location_on,
-                      size: 50,
-                      color: Color(0xFFFF5252),
+                    width: 60,
+                    height: 60,
+                    alignment: Alignment.center,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF5252).withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.my_location,
+                          size: 28,
+                          color: Color(0xFFFF5252),
+                        ),
+                      ),
                     ),
                   ),
                 ],
+              ),
+              // Seller markers from API data
+              Builder(
+                builder: (context) {
+                  final sellers = _nearbySellers(
+                    categories: _selectedCategories.isNotEmpty ? _selectedCategories : null,
+                  );
+                  print('🗺️ Rendering ${sellers.length} markers on map (from ${_sellers.length} sellers)');
+                  
+                  // Track positions to detect overlaps and add small offset
+                  final Map<String, int> positionCount = {};
+                  final List<Marker> markers = [];
+                  
+                  for (int i = 0; i < sellers.length; i++) {
+                    final s = sellers[i];
+                    final posKey = '${s.position.latitude.toStringAsFixed(4)}_${s.position.longitude.toStringAsFixed(4)}';
+                    final count = positionCount[posKey] ?? 0;
+                    positionCount[posKey] = count + 1;
+                    
+                    // Add small offset for overlapping markers
+                    LatLng adjustedPos = s.position;
+                    if (count > 0) {
+                      // Spiral offset for overlapping markers
+                      final angle = count * 0.8;
+                      final radius = 0.0008 * count; // ~80 meters per step
+                      adjustedPos = LatLng(
+                        s.position.latitude + radius * math.cos(angle),
+                        s.position.longitude + radius * math.sin(angle),
+                      );
+                    }
+                    
+                    markers.add(_buildSellerMarkerAt(s, adjustedPos));
+                  }
+                  
+                  return MarkerLayer(markers: markers);
+                },
               ),
             ],
           ),
@@ -2062,14 +2772,67 @@ class _HomeScreenState extends State<HomeScreen> {
                   final currentZoom = _mapController.camera.zoom;
                   final newZoom = math.min(18.0, currentZoom + 1);
                   _mapController.move(_mapController.camera.center, newZoom);
+                  // Explicitly trigger update since onPositionChanged ignores non-gestures
+                  Future.delayed(const Duration(milliseconds: 300), _updateDistanceBasedOnMapBounds);
                 }),
                 const SizedBox(height: 8),
                 _zoomButton(Icons.remove, () {
                   final currentZoom = _mapController.camera.zoom;
                   final newZoom = math.max(3.0, currentZoom - 1);
                   _mapController.move(_mapController.camera.center, newZoom);
+                  // Explicitly trigger update since onPositionChanged ignores non-gestures
+                  Future.delayed(const Duration(milliseconds: 300), _updateDistanceBasedOnMapBounds);
+                }),
+                const SizedBox(height: 8),
+                // Center on user location
+                _zoomButton(Icons.my_location, () {
+                  _mapController.move(_currentPosition, 14.0);
+                }),
+                const SizedBox(height: 8),
+                // Fit to show all sellers
+                _zoomButton(Icons.fit_screen, () {
+                  final sellers = _nearbySellers(
+                    categories: _selectedCategories.isNotEmpty ? _selectedCategories : null,
+                  );
+                  if (sellers.isNotEmpty) {
+                    _fitToSellers(sellers);
+                  }
                 }),
               ],
+            ),
+          ),
+          // Seller count indicator
+          Positioned(
+            top: 12,
+            left: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2C3E50),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.storefront, size: 14, color: Color(0xFFCDDC39)),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${_nearbySellers(categories: _selectedCategories.isNotEmpty ? _selectedCategories : null).length} sellers',
+                    style: GoogleFonts.lato(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           if (_mapLoading)
@@ -2227,7 +2990,8 @@ class _HomeScreenState extends State<HomeScreen> {
                        // Switch to Home tab (Index 1 for Main Home Screen)
                        _selectedIndex = 1; 
                      });
-                     _loadSellersForCategories(); // Refresh results
+                     _sellerLoadDebounce?.cancel();
+                     _sellerLoadDebounce = Timer(const Duration(milliseconds: 350), () async { await _loadSellersForCategories(); });
                    }
                 },
                 // Optional: Long press to drill down if needed
@@ -2385,7 +3149,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Stack(
       children: [
         SingleChildScrollView(
-          padding: EdgeInsets.only(bottom: _pageBottomInset(context)),
+          padding: EdgeInsets.only(bottom: _pageBottomInset(context) + 58.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -2475,7 +3239,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                   _distanceLimitKm = null;
                                 }
                               });
-                              WidgetsBinding.instance.addPostFrameCallback((_) => _loadSellersForCategories());
+                              _sellerLoadDebounce?.cancel();
+                              _sellerLoadDebounce = Timer(const Duration(milliseconds: 350), () async { await _loadSellersForCategories(); });
                             },
                             borderRadius: BorderRadius.circular(10),
                             child: Stack(
@@ -2514,7 +3279,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                           _distanceLimitKm = null;
                                         }
                                       });
-                                      WidgetsBinding.instance.addPostFrameCallback((_) => _loadSellersForCategories());
+                                      _sellerLoadDebounce?.cancel();
+                                      _sellerLoadDebounce = Timer(const Duration(milliseconds: 350), () async { await _loadSellersForCategories(); });
                                     },
                                     borderRadius: BorderRadius.circular(8),
                                     child: Container(
@@ -2541,12 +3307,12 @@ class _HomeScreenState extends State<HomeScreen> {
           LayoutBuilder(
             builder: (context, constraints) {
               final sellers = _nearbySellers(categories: _selectedCategories.isNotEmpty ? _selectedCategories : null);
-              const crossAxisCount = 3;
-              const spacing = 12.0;
+              const crossAxisCount = 4;
+              const spacing = 10.0;
               const aspect = 1.0;
               final tileWidth = (constraints.maxWidth - spacing * (crossAxisCount - 1)) / crossAxisCount;
               final tileHeight = tileWidth / aspect;
-              final safeBottom = MediaQuery.of(context).padding.bottom + 6;
+              final safeBottom = MediaQuery.of(context).padding.bottom + 58.0;
               final headerApprox = 120 + (_selectedCategories.isNotEmpty ? 32 : 0);
               final limitHeight = MediaQuery.of(context).size.height - safeBottom - headerApprox;
               final gridHeight = math.max(tileHeight * 3 + spacing * 2, limitHeight);
@@ -2637,6 +3403,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         },
                       ),
                       Positioned(left: 0, right: 0, top: 0, child: _verticalScrollGradient(true)),
+                      Positioned(left: 0, right: 0, bottom: 0, child: _bottomBlurOverlay()),
                     ],
                   ),
                 );
@@ -2655,6 +3422,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           maxZoom: 18.0,
                           onTap: (_, __) { if (_selectedSeller != null) setState(() => _selectedSeller = null); },
                           onMapEvent: (event) { if (_selectedSeller != null) setState(() => _selectedSeller = null); },
+                  onPositionChanged: (position, hasGesture) {
+                    if (!hasGesture) return;
+                    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+                    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+                      _updateDistanceBasedOnMapBounds();
+                    });
+                  },
                           interactionOptions: const InteractionOptions(
                             enableScrollWheel: true,
                             enableMultiFingerGestureRace: true,
@@ -2677,94 +3451,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                   color: Color(0xFFFF5252),
                                 ),
                               ),
-                              ...sellers.map((s) => Marker(
-                                    point: s.position,
-                                    width: 150,
-                                    height: 100,
-                                    alignment: Alignment.bottomCenter,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        if (_selectedSeller == s)
-                                          SizedBox(
-                                            width: 140,
-                                            height: 54,
-                                            child: Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFFAF7F0),
-                                                borderRadius: BorderRadius.circular(8),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black.withOpacity(0.12),
-                                                    blurRadius: 6,
-                                                    offset: const Offset(0, 2),
-                                                  ),
-                                                ],
-                                              ),
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text(
-                                                    _clean(s.name),
-                                                    style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                  Text(
-                                                    _clean(s.description),
-                                                    style: GoogleFonts.lato(fontSize: 9, color: const Color(0xFF4A4A4A)),
-                                                    maxLines: 1,
-                                                    overflow: TextOverflow.ellipsis,
-                                                  ),
-                                                  Align(
-                                                    alignment: Alignment.bottomLeft,
-                                                    child: TextButton(
-                                                      style: TextButton.styleFrom(
-                                                        padding: EdgeInsets.zero,
-                                                        minimumSize: const Size(0, 0),
-                                                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                                        visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-                                                      ),
-                                                      onPressed: () async {
-                                                        final isSaved = _savedBiz.contains(s.name);
-                                                        await Navigator.of(context).push(
-                                                          MaterialPageRoute(
-                                                            builder: (_) => SellerDetailScreen(
-                                                              seller: s,
-                                                              isSaved: isSaved,
-                                                              userPosition: _currentPosition,
-                                                            ),
-                                                          ),
-                                                        );
-                                                      },
-                                                      child: Text('More Info', style: GoogleFonts.lato(fontSize: 9, fontWeight: FontWeight.w700)),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        const SizedBox(height: 2),
-                                        GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              _selectedSeller = s;
-                                            });
-                                          },
-                                          child: const Icon(
-                                            Icons.location_on,
-                                            size: 20,
-                                            color: Color(0xFF1A1A1A),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )),
+                              ...sellers.where((s) => s != _selectedSeller).map(_buildSellerMarker),
+                              if (_selectedSeller != null && sellers.contains(_selectedSeller!))
+                                _buildSellerMarker(_selectedSeller!),
                             ],
                           ),
                         ],
                       ),
+                      
                       Positioned(
                         top: 12,
                         right: 12,
@@ -2774,16 +3468,21 @@ class _HomeScreenState extends State<HomeScreen> {
                               final currentZoom = _mapController.camera.zoom;
                               final newZoom = math.min(18.0, currentZoom + 1);
                               _mapController.move(_mapController.camera.center, newZoom);
+                              // Explicitly trigger update since onPositionChanged ignores non-gestures
+                              Future.delayed(const Duration(milliseconds: 300), _updateDistanceBasedOnMapBounds);
                             }),
                             const SizedBox(height: 8),
                             _zoomButton(Icons.remove, () {
                               final currentZoom = _mapController.camera.zoom;
                               final newZoom = math.max(3.0, currentZoom - 1);
                               _mapController.move(_mapController.camera.center, newZoom);
+                              // Explicitly trigger update since onPositionChanged ignores non-gestures
+                              Future.delayed(const Duration(milliseconds: 300), _updateDistanceBasedOnMapBounds);
                             }),
                           ],
                         ),
                       ),
+                      Positioned(left: 0, right: 0, bottom: 0, child: _bottomBlurOverlay()),
 
                     ],
                   ),
@@ -2814,8 +3513,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       SizedBox(height: 8),
                       Text(
-                        _expandingSearch ? 'Expanding Coverage Area...' : 'Searching nearby...',
-                        style: TextStyle(fontSize: 12, color: Color(0xFF4A4A4A)),
+                        'Fetching new Sellers..',
+                        style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
                       ),
                     ],
                   ),
@@ -2883,14 +3582,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final showCat = dc.isNotEmpty && dc.toLowerCase() != dn.toLowerCase();
     
     // Construct full image URL if needed
+    // Skip default placeholder images
     String? imageUrl = s.imageUrl;
     if (imageUrl != null && !imageUrl.startsWith('http')) {
       imageUrl = 'https://www.jayantslist.com$imageUrl';
     }
-    
-    // Debug: Print the image URL being used
-    if (imageUrl != null) {
-      print('🖼️ Loading image for ${s.name}: $imageUrl');
+    if (_isDefaultPlaceholder(imageUrl)) {
+      imageUrl = null;
     }
 
     return GestureDetector(
@@ -2940,7 +3638,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFFFAF7F0),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: const Color(0xFF1A1A1A).withOpacity(0.1), width: 1),
           boxShadow: [
             BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 4, offset: const Offset(0, 2)),
@@ -2950,13 +3648,14 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 // Centered Image
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 32,
+                  height: 32,
                   decoration: const BoxDecoration(
                     color: Color(0xFFEDE9DF),
                     shape: BoxShape.circle,
@@ -2971,7 +3670,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Text(
                                 dn.isNotEmpty ? dn[0].toUpperCase() : '?',
                                 style: GoogleFonts.playfairDisplay(
-                                    fontSize: 16,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.w700,
                                     color: const Color(0xFF1A1A1A)),
                               ),
@@ -2982,53 +3681,41 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Text(
                             dn.isNotEmpty ? dn[0].toUpperCase() : '?',
                             style: GoogleFonts.playfairDisplay(
-                                fontSize: 16,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF1A1A1A)),
                           ),
                         ),
                 ),
-                const SizedBox(height: 8),
-                // Content
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
+                const SizedBox(height: 6),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        dn,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.playfairDisplay(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                      ),
+                      const SizedBox(height: 2),
+                      if (showCat)
                         Text(
-                          dn,
+                          dc,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.playfairDisplay(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                          style: GoogleFonts.lato(fontSize: 9, color: const Color(0xFF6B7280), fontWeight: FontWeight.w500),
                         ),
-                        const SizedBox(height: 2),
-                        if (showCat)
-                          Text(
-                            dc,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.lato(fontSize: 9, color: const Color(0xFF6B7280), fontWeight: FontWeight.w500),
-                          ),
-                        const SizedBox(height: 4),
-                        // Brief description or placeholder
-                        Flexible(
-                          child: Text(
-                            'Quality products & services.',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.lato(fontSize: 9, color: const Color(0xFF9CA3AF), height: 1.2),
-                          ),
-                        ),
-                      ],
-                    ),
+                      const SizedBox(height: 2),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
               ],
             ),
             // Heart Icon
