@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'package:path/path.dart' as path;
 
 
 
@@ -51,6 +53,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _profileImagePath = prefs.getString('user_profile_image_path') ?? '';
     _userRole = prefs.getString('user_role') ?? '';
     _pictureUrl = prefs.getString('user_picture_url') ?? '';
+    
+    // Fetch latest profile info from server to get correct picture_url
+    try {
+      final accountData = await ApiService().getAccountMe();
+      print('📷 getAccountMe response: $accountData');
+      
+      if (accountData['picture_url'] != null) {
+        final pu = accountData['picture_url'].toString();
+        if (pu.isNotEmpty && !pu.contains('default.jpg')) {
+          _pictureUrl = pu.startsWith('http') ? pu : 'https://www.jayantslist.com$pu';
+          await prefs.setString('user_picture_url', _pictureUrl);
+        }
+      }
+      
+      // Also update name from server if available
+      if (accountData['fullname'] != null && accountData['fullname'].toString().isNotEmpty) {
+        _name.text = accountData['fullname'].toString();
+        await prefs.setString('user_name', _name.text);
+      }
+      
+      // Update role if available
+      if (accountData['roles'] != null && accountData['roles'] is List && (accountData['roles'] as List).isNotEmpty) {
+        _userRole = (accountData['roles'] as List).first.toString();
+        await prefs.setString('user_role', _userRole);
+      }
+    } catch (e) {
+      print('📷 getAccountMe error: $e');
+      // Fallback to cached values
+    }
+    
+    print('📷 _load: _pictureUrl = $_pictureUrl, _profileImagePath = $_profileImagePath');
     
     _savedBiz = await UserPreferences().getSavedSellers();
     _recentlyViewed = await UserPreferences().getRecentlyViewed();
@@ -157,6 +190,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       height: 68,
                                       fit: BoxFit.cover,
                                       errorBuilder: (context, error, stackTrace) {
+                                        print('📷 Image.network error: $error for URL: $_pictureUrl');
                                         return Text(
                                           uname.isNotEmpty ? uname[0].toUpperCase() : '?',
                                           style: GoogleFonts.playfairDisplay(
@@ -175,6 +209,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           width: 68,
                                           height: 68,
                                           fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            // Clear invalid path from preferences
+                                            SharedPreferences.getInstance().then((prefs) {
+                                              prefs.remove('user_profile_image_path');
+                                            });
+                                            return Text(
+                                              uname.isNotEmpty ? uname[0].toUpperCase() : '?',
+                                              style: GoogleFonts.playfairDisplay(
+                                                fontSize: 24,
+                                                fontWeight: FontWeight.w700,
+                                                color: const Color(0xFF2C3E50),
+                                              ),
+                                            );
+                                          },
                                         ),
                                       )
                                     : Text(
@@ -195,14 +243,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 if (src != null) {
                                   final p = await _pickProfileImage(src);
                                   if (p != null) {
+                                    // Show temporary local preview while uploading
                                     setState(() {
                                       _profileImagePath = p;
                                       _pictureUrl = '';
                                     });
-                                    final prefs = await SharedPreferences.getInstance();
-                                    await prefs.setString('user_profile_image_path', _profileImagePath.trim());
-                                    await prefs.remove('user_picture_url');
-                                    await _autoSaveProfileImage(_profileImagePath);
+                                    // Upload to API - this will clear local path and set server URL
+                                    await _autoSaveProfileImage(p);
                                   }
                                 }
                               },
@@ -905,7 +952,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final picker = ImagePicker();
       final picked = await picker.pickImage(source: source, maxWidth: 1024, imageQuality: 85);
       if (picked == null) return null;
-      return picked.path;
+      
+      // Copy image from temp to permanent app documents directory
+      final appDir = await getApplicationDocumentsDirectory();
+      final profileImagesDir = Directory('${appDir.path}/profile_images');
+      if (!await profileImagesDir.exists()) {
+        await profileImagesDir.create(recursive: true);
+      }
+      
+      // Generate unique filename with timestamp
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final extension = path.extension(picked.path).isNotEmpty ? path.extension(picked.path) : '.jpg';
+      final permanentPath = '${profileImagesDir.path}/profile_$timestamp$extension';
+      
+      // Copy file to permanent location
+      final tempFile = File(picked.path);
+      await tempFile.copy(permanentPath);
+      
+      return permanentPath;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -958,28 +1022,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
         fullname: fullname,
         filePath: path,
       );
-      final data = res['data'] ?? res;
-      final user = (data is Map) ? (data['user_account'] ?? data['user'] ?? data['account']) : null;
-      String? pictureUrl;
-      if (user is Map) {
-        final pu = user['picture_url']?.toString();
-        if (pu != null && pu.isNotEmpty) {
-          pictureUrl = pu.startsWith('http') ? pu : 'https://www.jayantslist.com$pu';
+      print('📷 Profile update response: $res');
+      
+      // After upload, fetch the current user profile to get the correct picture_url
+      final accountData = await ApiService().getAccountMe();
+      print('📷 getAccountMe after upload: $accountData');
+      
+      if (accountData['picture_url'] != null) {
+        final pu = accountData['picture_url'].toString();
+        if (pu.isNotEmpty && !pu.contains('default.jpg')) {
+          final pictureUrl = pu.startsWith('http') ? pu : 'https://www.jayantslist.com$pu';
+          final ts = DateTime.now().millisecondsSinceEpoch;
+          final sep = pictureUrl.contains('?') ? '&' : '?';
+          final busted = '$pictureUrl${sep}v=$ts';
+          print('📷 Saving picture URL to prefs: $busted');
+          
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('user_picture_url', busted);
+          await prefs.remove('user_profile_image_path');
+          
+          if (mounted) {
+            setState(() {
+              _pictureUrl = busted;
+              _profileImagePath = '';
+            });
+            print('📷 setState done, _pictureUrl = $_pictureUrl');
+          }
         }
       }
-      if (pictureUrl != null && pictureUrl.isNotEmpty) {
-        final ts = DateTime.now().millisecondsSinceEpoch;
-        final sep = pictureUrl.contains('?') ? '&' : '?';
-        final busted = '$pictureUrl${sep}v=$ts';
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('user_picture_url', busted);
-        if (mounted) {
-          setState(() {
-            _pictureUrl = busted;
-          });
-        }
-      }
-    } catch (_) {
+    } catch (e) {
+      print('📷 _autoSaveProfileImage error: $e');
       // Silent: no snackbar
     }
   }

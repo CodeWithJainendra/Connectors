@@ -11,6 +11,8 @@ class Seller {
   final String? phoneNumber;
   final String? description;
   final String? categoryImageUrl;
+  final int? categoryId;
+  final String? hcode;
 
   const Seller({
     this.id,
@@ -21,15 +23,22 @@ class Seller {
     this.phoneNumber,
     this.description,
     this.categoryImageUrl,
+    this.categoryId,
+    this.hcode,
   });
 
   factory Seller.fromJson(Map<String, dynamic> json) {
     String cat = 'Service';
     String? catImageUrl;
+    int? catId;
+    String? catHcode;
     
     if (json['category'] is Map) {
-      cat = json['category']['name']?.toString() ?? 'Service';
-      catImageUrl = json['category']['picture_url']?.toString();
+      final cMap = json['category'];
+      cat = cMap['name']?.toString() ?? 'Service';
+      catImageUrl = cMap['picture_url']?.toString();
+      catId = int.tryParse(cMap['id']?.toString() ?? '');
+      catHcode = cMap['hcode']?.toString();
     } else {
       cat = json['category']?.toString() ?? 'Service';
     }
@@ -46,6 +55,8 @@ class Seller {
       phoneNumber: json['contact_no'] ?? json['mobile_number'] ?? json['phone_number'] ?? json['phone'] ?? json['contact_number'],
       description: json['description'] ?? json['about'],
       categoryImageUrl: catImageUrl,
+      categoryId: catId,
+      hcode: catHcode,
     );
   }
 
@@ -60,6 +71,8 @@ class Seller {
       'phone_number': phoneNumber,
       'description': description,
       'categoryImageUrl': categoryImageUrl,
+      'categoryId': categoryId,
+      'hcode': hcode,
     };
   }
 }

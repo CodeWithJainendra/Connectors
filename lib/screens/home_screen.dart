@@ -51,15 +51,18 @@ class _HomeScreenState extends State<HomeScreen> {
     'Spark Electronics',
     'Style Studio',
     'Home Care',
-    'Paper Point',
   ];
+  // Filters
+  double _filterDistance = 3000.0;
   Set<String> _selectedCategories = {};
-  List<Seller> _sellers = const [];
+  List<int> _selectedCategoryIds = [];
+  String _searchQuery = '';
+  List<Seller> _sellers = [];
   Seller? _selectedSeller;
   bool _sellersLoading = false;
   Set<String> _lastFetchedCategories = {};
   final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
+  // removed duplicate query
   Set<String> _selectedLetters = {};
   final List<String> _allCategories = const []; // We will use _apiCategories instead
   double? _distanceLimitKm = 50.0;
@@ -79,6 +82,9 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _apiCatsLoading = false;
   String? _apiCatsError;
   Map<String, String> _apiCatCodes = {};
+  Map<String, int> _apiCatIds = {};
+  Map<String, String> _apiCatImages = {};
+  List<Map<String, dynamic>> _allRawCategories = [];
 
   // Grid Category Hierarchy State
   List<Map<String, dynamic>> _gridCategories = [];
@@ -299,269 +305,67 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  
   // Combined Filter Bottom Sheet
-  void _showCombinedFilterSheet() {
-    if (_apiCategories.isEmpty && !_apiCatsLoading) {
+  void _showCombinedFilterSheet({String? parentCategory}) {
+    // Ensure root categories are loaded if opening root filter
+    if (parentCategory == null && _apiCategories.isEmpty && !_apiCatsLoading) {
       _fetchApiCategories();
     }
-    
+
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
+        
+        // Local State
+        final Set<String> tempSelectedCategories = Set.from(_selectedCategories);
+        final List<int> tempSelectedCategoryIds = List.from(_selectedCategoryIds);
+        double? tempDistance = _distanceLimitKm;
+        
+        // Cache for loaded tabs to avoid refetching
+        final Map<String, List<_CategoryNode>> allowedChildrenCache = {};
+        
         return StatefulBuilder(
           builder: (context, sbSetState) {
-            return Container(
-              // Use wrap_content height with a max limit if needed, or MainAxisSize.min
-              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-              decoration: const BoxDecoration(
-                color: Color(0xFFFAF7F0),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min, // Compact height
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Header
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Filters',
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1A1A1A),
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close, size: 20, color: Color(0xFF1A1A1A)),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Divider(height: 1),
-                  
-                  // content
-                  Flexible(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Distance Section
-                          Text(
-                            'Distance Range',
-                            style: GoogleFonts.lato(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1A1A1A),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          // Labels above the slider
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 10.0), // Adjust to align with slider track roughly
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('<5', style: GoogleFonts.lato(fontSize: 10, color: Colors.grey)),
-                                Text('<15', style: GoogleFonts.lato(fontSize: 10, color: Colors.grey)),
-                                Text('<25', style: GoogleFonts.lato(fontSize: 10, color: Colors.grey)),
-                                Text('<35', style: GoogleFonts.lato(fontSize: 10, color: Colors.grey)),
-                                Text('<45', style: GoogleFonts.lato(fontSize: 10, color: Colors.grey)),
-                                Text('All', style: GoogleFonts.lato(fontSize: 10, color: Colors.grey)),
-                              ],
-                            ),
-                          ),
-                          SliderTheme(
-                            data: SliderTheme.of(context).copyWith(
-                              activeTrackColor: const Color(0xFFCDDC39),
-                              inactiveTrackColor: const Color(0xFFE0E0E0),
-                              thumbColor: const Color(0xFFCDDC39),
-                              overlayColor: const Color(0xFFCDDC39).withOpacity(0.2),
-                              valueIndicatorColor: const Color(0xFFCDDC39),
-                              valueIndicatorTextStyle: const TextStyle(color: Color(0xFF1A1A1A), fontSize: 12, fontWeight: FontWeight.bold),
-                              trackHeight: 4,
-                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-                              tickMarkShape: const RoundSliderTickMarkShape(tickMarkRadius: 3), // Show dots
-                            ),
-                            child: Slider(
-                              value: _distanceLimitKm != null && _distanceLimitKm! <= 50 ? _distanceLimitKm! : 55.0,
-                              min: 5.0,
-                              max: 55.0, 
-                              divisions: 5, // 5, 15, 25, 35, 45, 55(All)
-                              // label removed to avoid triple redundancy
-                              onChanged: (val) {
-                                sbSetState(() {
-                                  if (val > 50) {
-                                    _distanceLimitKm = null;
-                                  } else {
-                                    _distanceLimitKm = val;
-                                  }
-                                });
-                              },
-                            ),
-                          ),
-                          // Redundant text below slider removed per user request
-                          
-                          const SizedBox(height: 16),
-                          const Divider(),
-                          const SizedBox(height: 16),
-
-                          // Categories Section
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Categories',
-                                style: GoogleFonts.lato(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF1A1A1A),
-                                ),
-                              ),
-                              if (_selectedCategories.isNotEmpty)
-                                GestureDetector(
-                                  onTap: () {
-                                    sbSetState(() {
-                                      _selectedCategories.clear();
-                                    });
-                                  },
-                                  child: Text(
-                                    'Clear',
-                                    style: GoogleFonts.lato(
-                                      fontSize: 12,
-                                      color: const Color(0xFFFF5252),
-                                      fontWeight: FontWeight.w600
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          
-                          if (_apiCatsLoading)
-                             const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()))
-                          else if (_apiCategories.isEmpty)
-                             Center(child: Text('No categories found', style: GoogleFonts.lato(color: Colors.grey)))
-                          else
-                             Wrap(
-                               spacing: 6,
-                               runSpacing: 6,
-                               children: _apiCategories.map((cat) {
-                                 final isSelected = _selectedCategories.contains(cat);
-                                 return FilterChip(
-                                   label: Text(cat),
-                                   selected: isSelected,
-                                   onSelected: (bool selected) {
-                                     sbSetState(() {
-                                       if (selected) {
-                                         _selectedCategories.add(cat);
-                                       } else {
-                                         _selectedCategories.remove(cat);
-                                       }
-                                     });
-                                   },
-                                   backgroundColor: Colors.white,
-                                   selectedColor: const Color(0xFFCDDC39).withOpacity(0.3),
-                                   checkmarkColor: const Color(0xFF1A1A1A),
-                                   labelStyle: GoogleFonts.lato(
-                                     fontSize: 11, // Smaller text
-                                     color: isSelected ? const Color(0xFF1A1A1A) : const Color(0xFF4A4A4A),
-                                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                   ),
-                                   shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16), // Smaller radius
-                                      side: BorderSide(
-                                        color: isSelected ? const Color(0xFFCDDC39) : Colors.grey.withOpacity(0.3),
-                                      ),
-                                   ),
-                                   visualDensity: VisualDensity.compact, // Smaller tap target
-                                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap, // Reduce padding
-                                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                                 );
-                               }).toList(),
-                             ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  
-                  // Action Buttons
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                             // Reset
-                             setState(() {
-                               _distanceLimitKm = null;
-                               _selectedCategories.clear();
-                             });
-                             sbSetState(() {
-                               _distanceLimitKm = null;
-                               _selectedCategories.clear();
-                             });
-                            },
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              side: const BorderSide(color: Color(0xFFE0E0E0)),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            child: Text('Reset', style: GoogleFonts.lato(color: const Color(0xFF1A1A1A), fontSize: 13)),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              // Apply changes
-                              setState(() {
-                                 // State updated via sbSetState needs to be reflected/applied
-                              });
-                              _loadSellersForCategories();
-                              Navigator.pop(context);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFCDDC39),
-                              foregroundColor: const Color(0xFF1A1A1A),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              elevation: 0,
-                            ),
-                            child: Text(
-                              'Apply',
-                              style: GoogleFonts.lato(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
+             
+             // Initialization: Ensure we have a selected root
+             // If parentCategory is passed, that is our selected root.
+             // If not, we default to the first available root category.
+             // We use _apiCategories for the Left Panel (Tabs).
+             
+             String activeRoot = parentCategory ?? (_apiCategories.isNotEmpty ? _apiCategories.first : '');
+             
+             return _FilterSheetContent(
+               initialTab: activeRoot,
+               rootCategories: _apiCategories,
+               apiCatIds: _apiCatIds,
+               apiCatCodes: _apiCatCodes,
+               sellers: _sellers,
+               rawCategories: _allRawCategories,
+               tempSelectedCategories: tempSelectedCategories,
+               tempSelectedCategoryIds: tempSelectedCategoryIds,
+               distance: tempDistance,
+               onApply: (selectedCats, selectedIds, dist) {
+                 Navigator.pop(context);
+                 setState(() {
+                   _selectedCategories = selectedCats;
+                   _selectedCategoryIds = selectedIds;
+                   _distanceLimitKm = dist;
+                 });
+                 print('APPLIED: Categories=$_selectedCategories');
+                 _loadSellersForCategories();
+               },
+             );
           },
         );
       },
     );
   }
+
 
   void _showFilterDrawer() {
      _showCombinedFilterSheet();
@@ -618,7 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 8),
                         _distanceChip('5 km', selectedIndex == 2, () { sbSetState(() { selectedIndex = 2; }); }),
                         const SizedBox(width: 8),
-                        _distanceChip('Any', selectedIndex == 3, () { sbSetState(() { selectedIndex = 3; }); }),
+                        _distanceChip('All', selectedIndex == 3, () { sbSetState(() { selectedIndex = 3; }); }),
                       ],
                     ),
                   ),
@@ -795,7 +599,9 @@ class _HomeScreenState extends State<HomeScreen> {
     // Bidirectional update: If user zooms/pans, update the filter to match the view.
     // This allows exploring beyond OR within the initial/manual filter.
     
-    final currentLimit = _distanceLimitKm ?? 50.0;
+    // Safety check: If currently in "All" mode (> 10000 km), don't shrink it.
+    final currentLimit = _distanceLimitKm ?? 20000.0;
+    if (currentLimit > 10000.0) return;
     
     // Only update if significantly different (> 15% change or > 5km) to avoid constant reloads
     // on small movements.
@@ -835,8 +641,15 @@ class _HomeScreenState extends State<HomeScreen> {
            lowerUrl.contains('/default');
   }
 
-  Marker _buildSellerMarker(Seller s) {
+  Marker _buildSellerMarker(Seller s, {LatLng? position}) {
     final isSelected = _selectedSeller == s;
+    final currentZoom = _mapController.camera.zoom;
+    final isZoomedOut = currentZoom < 13.0;
+    
+    // Dynamic Dot Size
+    // Zoom 3 -> ~4px. Zoom 13 -> ~18px.
+    final dotSize = math.max(4.0, (currentZoom - 2) * 1.6);
+    final cappedSize = math.min(22.0, dotSize);
     
     // Construct full image URL if needed (for shop profile picture)
     // Skip default placeholder images
@@ -859,11 +672,34 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return Marker(
-      point: s.position,
-      width: 150,
-      height: 100,
-      alignment: Alignment.bottomCenter,
-      child: Column(
+      point: position ?? s.position,
+      width: isZoomedOut ? cappedSize + 16 : 150, // Slightly larger bounding box for touch target
+      height: isZoomedOut ? cappedSize + 16 : 100,
+      alignment: isZoomedOut ? Alignment.center : Alignment.bottomCenter,
+      child: isZoomedOut 
+        ? GestureDetector(
+              onTap: () {
+                _mapController.move(s.position, 15.0); // Zoom in on tap
+                setState(() {
+                  _selectedSeller = s;
+                });
+              },
+              child: Center(
+                child: Container(
+                  width: cappedSize,
+                  height: cappedSize,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A1A1A), // Black
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 1.5),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4, offset: const Offset(0, 2))
+                    ]
+                  ),
+                ),
+              ),
+            )
+        : Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (isSelected)
@@ -882,33 +718,29 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   );
+                  _loadSavedBiz();
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFAF7F0),
-                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
                     boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.12),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Profile picture with proper error handling
+                      BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 6, offset: const Offset(0, 3)),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
                     Container(
-                      width: 24,
-                      height: 24,
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFFE5E7EB),
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      clipBehavior: Clip.hardEdge,
-                      child: (imageUrl != null && imageUrl.isNotEmpty)
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: imageUrl != null 
                           ? Image.network(
                               imageUrl,
                               fit: BoxFit.cover,
@@ -936,6 +768,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                     ),
+                    ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Column(
@@ -949,7 +782,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           Text(
                             _clean(s.category),
-                            style: GoogleFonts.lato(fontSize: 9, color: const Color(0xFF4A4A4A)),
+                            style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF333333)),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -987,7 +820,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 // Show category image if available, otherwise show storefront icon
-                child: (categoryImageUrl != null && categoryImageUrl.isNotEmpty)
+                child: (categoryImageUrl != null && categoryImageUrl.isNotEmpty && !categoryImageUrl.endsWith('.svg')) // explicit svg check just in case
                     ? ClipOval(
                         child: Image.network(
                           categoryImageUrl,
@@ -1203,21 +1036,42 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {});
     try {
       final list = await ApiService().getCategories();
-      final names = <String>[];
       _apiCatCodes.clear();
+      _apiCatIds.clear();
+      _apiCatImages.clear();
+      _allRawCategories = List<Map<String, dynamic>>.from(list);
+      final names = <String>[];
+      
       for (final e in list) {
         final name = e['name']?.toString() ?? '';
         if (name.isEmpty) continue;
-        names.add(name);
+        
         final h = e['hcode']?.toString();
+        // Categorize logic: Root categories have no dots in hcode (e.g. "1", "2"). 
+        // Subcategories have dots (e.g. "1.2").
+        // We only add roots to the main list for now.
+        final isRoot = (h != null && !h.contains('.'));
+        
+        if (isRoot) {
+           names.add(name);
+        }
+
         if (h != null && h.isNotEmpty) {
           _apiCatCodes[_norm(name)] = h;
         }
+        if (e['id'] != null) {
+          _apiCatIds[_norm(name)] = int.tryParse(e['id'].toString()) ?? 0;
+        }
+        if (e['picture_url'] != null) {
+           _apiCatImages[_norm(name)] = e['picture_url'].toString();
+        }
       }
       _apiCategories = names;
+      print('✅ Categories loaded: ${names.length} roots, ${_apiCatIds.length} IDs, ${_apiCatCodes.length} HCodes, ${_allRawCategories.length} raw');
       try {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('cached_categories', json.encode(names));
+          await prefs.setString('cached_categories_v2', json.encode(list));
       } catch (_) {}
     } catch (_) {
       _apiCatsError = 'Unable to fetch categories';
@@ -1264,7 +1118,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadArtisansNearby() async {
     try {
-      print('🔍 Loading artisans nearby... distance: ${_distanceLimitKm ?? 50.0}km');
+      // If _distanceLimitKm is null (User selected "All"), we use a global radius (20,000 km)
+      final double searchRadius = (_distanceLimitKm ?? 20000.0) * 1000;
+      print('🔍 Loading artisans nearby... distance: ${_distanceLimitKm == null ? "Unlimited" : "$_distanceLimitKm km"}');
       print('📍 Current position: $_currentPosition');
       
       final prefs = await SharedPreferences.getInstance();
@@ -1277,28 +1133,169 @@ class _HomeScreenState extends State<HomeScreen> {
         // Update location first as per API requirement
         await ApiService().updateLocation(_currentPosition.latitude, _currentPosition.longitude);
 
-        String? catParam;
+        // Collect HCodes for optimized fetching, and list of names for fallback search
+        final Map<String, String> categoryHcodes = {}; // hcode -> category name
+        final List<String> categoriesNeedsSearch = [];
+
         if (_selectedCategories.isNotEmpty) {
-          final sel = _selectedCategories.first;
-          catParam = _apiCatCodes[_norm(sel)] ?? sel;
+          for (final cat in _selectedCategories) {
+            // First try main category codes map
+            String? hcode = _apiCatCodes[_norm(cat)];
+            
+            // If not found, search in loaded sellers for this category
+            if (hcode == null) {
+              for (final s in _sellers) {
+                if (s.category.toLowerCase().trim() == cat.toLowerCase().trim() && s.hcode != null) {
+                  hcode = s.hcode;
+                  // Cache it for future use
+                  _apiCatCodes[_norm(cat)] = hcode!;
+                  if (s.categoryId != null) {
+                    _apiCatIds[_norm(cat)] = s.categoryId!;
+                  }
+                  break;
+                }
+              }
+            }
+            
+            // Also try static fallback
+            if (hcode == null) {
+              final staticMatch = _allRawCategories.firstWhere(
+                (e) => _norm(e['name'].toString()) == _norm(cat), orElse: () => {});
+              if (staticMatch.isNotEmpty) hcode = staticMatch['hcode']?.toString();
+            }
+            
+            if (hcode != null && hcode.isNotEmpty) {
+              categoryHcodes[hcode] = cat;
+            } else {
+              // No HCode found? Mark for fallback search
+              categoriesNeedsSearch.add(cat);
+            }
+          }
         }
         
-        entries = await ApiService().getNearbySellers(
-          maxDistance: (_distanceLimitKm ?? 50.0) * 1000, // Convert km to meters
-          catHcode: catParam,
-        );
-        print('✅ Authenticated API returned ${entries.length} sellers');
-        // Fallback: if category selected and nearby endpoint returns empty, try search API
+        // Make API calls for all selected categories (or one call with no filter if none selected)
+        if (categoryHcodes.isEmpty && categoriesNeedsSearch.isEmpty) {
+          // No categories selected - fetch all nearby sellers
+          entries = await ApiService().getNearbySellers(
+            maxDistance: searchRadius,
+          );
+          print('✅ Fetched ${entries.length} sellers (no category filter)');
+        } else {
+          // Multiple categories selected - fetch for each and merge
+          print('📌 selection: $_selectedCategories');
+          print('📌 hcodes map: $categoryHcodes');
+          print('📌 needs search: $categoriesNeedsSearch');
+          
+          final List<Future<List<dynamic>>> futures = [];
+          
+          // 1. Fetch by HCode (with Per-Category Fallback to Search)
+          for (final hcode in categoryHcodes.keys) {
+             final catName = categoryHcodes[hcode]!;
+             futures.add(Future(() async {
+                try {
+                  print('🌐 Requesting HCode: $hcode for "$catName"');
+                  var result = await ApiService().getNearbySellers(
+                    maxDistance: searchRadius,
+                    catHcode: hcode,
+                  );
+                  
+                  if (result.isNotEmpty) {
+                    print('✅ HCode $hcode returned ${result.length} sellers');
+                    return result;
+                  } else {
+                    // Start Per-Category Fallback: If strict ID returns 0, try text search for this category
+                    print('⚠️ HCode $hcode returned 0. 🔁 Trying fallback search for "$catName"...');
+                    try {
+                       final searchResult = await ApiService().search(catName, maxDistance: searchRadius);
+                       final rawShops = searchResult['shops'] ?? [];
+                       
+                       // Post-Filter: Ensure the result actually relates to the category we searched for
+                       // This prevents "Goldsmithing Techniques" search from returning generic "Tailors" if the API is fuzzy.
+                       final List<dynamic> filteredShops = [];
+                       for (final shop in rawShops) {
+                          String sCat = '';
+                          if (shop['category'] != null) {
+                             if (shop['category'] is Map) sCat = shop['category']['name']?.toString() ?? '';
+                             else sCat = shop['category'].toString();
+                          }
+                          // Also check service_name or description if category is generic
+                          final String sDesc = (shop['description'] ?? '').toString();
+                          final String sName = (shop['shop_name'] ?? shop['name'] ?? '').toString();
+                          
+                          // Loose matching: if category name, title, or description contains the query
+                          if (sCat.toLowerCase().contains(catName.toLowerCase()) || 
+                              sDesc.toLowerCase().contains(catName.toLowerCase()) ||
+                              sName.toLowerCase().contains(catName.toLowerCase())) {
+                              filteredShops.add(shop);
+                          }
+                       }
+                       
+                       print('✅ Fallback Search "$catName" returned ${rawShops.length} raw -> ${filteredShops.length} filtered sellers');
+                       return filteredShops;
+                    } catch (e2) {
+                       print('❌ Fallback search for "$catName" also failed: $e2');
+                       return <dynamic>[];
+                    }
+                  }
+                } catch (e) {
+                  print('⚠️ Failed to fetch for hcode $hcode: $e');
+                  // On error, also try fallback
+                   try {
+                       print('🔁 Error fallback: Searching for "$catName"...');
+                       final searchResult = await ApiService().search(catName, maxDistance: searchRadius);
+                       final shops = searchResult['shops'] ?? [];
+                       return shops;
+                    } catch (e3) {
+                       return <dynamic>[];
+                    }
+                }
+             }));
+          }
+          
+          // 2. Fetch by Search (Fallback for missing HCode)
+          for (final catQuery in categoriesNeedsSearch) {
+             futures.add(Future(() async {
+                try {
+                  print('🌐 Requesting Search: "$catQuery"');
+                  final searchResult = await ApiService().search(catQuery, maxDistance: searchRadius);
+                  final shops = searchResult['shops'] ?? [];
+                  print('✅ Search "$catQuery" returned ${shops.length} sellers');
+                  return shops;
+                } catch (e) {
+                  print('⚠️ Failed to search for "$catQuery": $e');
+                  return <dynamic>[];
+                }
+             }));
+          }
+          
+          final results = await Future.wait(futures);
+          
+          // Merge all results
+          for (final result in results) {
+            entries.addAll(result);
+          }
+          print('✅ Total merged sellers: ${entries.length}');
+        }
+        
+        /* 
+        // Global Fallback is now DEPRECATED because we have per-category fallback with strict filtering.
+        // Keeping this enabled causes "junk" results (like Tailors) to appear when searching for specific EMPTY categories,
+        // because the global fallback doesn't apply the strict name match filter.
+        
         if (entries.isEmpty && _selectedCategories.isNotEmpty) {
           try {
-            final query = _selectedCategories.first;
-            final searchResult = await ApiService().search(query, maxDistance: (_distanceLimitKm ?? 50.0) * 1000);
-            entries = searchResult['shops'] ?? [];
-            print('🔁 Fallback search for category "$query" returned ${entries.length} shops');
+            print('🔁 Fallback: Using search API for all categories...');
+            for (final cat in _selectedCategories) {
+              final searchResult = await ApiService().search(cat, maxDistance: (_distanceLimitKm ?? 50.0) * 1000);
+              final shops = searchResult['shops'] ?? [];
+              entries.addAll(shops);
+              print('🔁 Fallback search for "$cat" returned ${shops.length} shops');
+            }
           } catch (e3) {
             print('❌ Fallback search failed: $e3');
           }
-        }
+        } 
+        */
       } catch (e) {
         print('⚠️ Failed to load nearby sellers (Authenticated): $e');
         errorMessage = e.toString();
@@ -1345,25 +1342,35 @@ class _HomeScreenState extends State<HomeScreen> {
         String name = (e['shop_name'] ?? e['business_name'] ?? e['artisan_name'] ?? e['name'] ?? '').toString();
         if (name.isEmpty) name = 'Shop';
         
-        // Parse Category
+        // Parse Category details
         String cat = 'Service';
         String? categoryImageUrl;
+        int? catId;
+        String? catHcode;
+        
         if (e['categories'] != null && (e['categories'] as List).isNotEmpty) {
           // Authenticated API format
-          cat = e['categories'][0]['name']?.toString() ?? 'Service';
-          categoryImageUrl = e['categories'][0]['picture_url']?.toString();
+          final c = e['categories'][0];
+          cat = c['name']?.toString() ?? 'Service';
+          categoryImageUrl = c['picture_url']?.toString();
+          if (c['id'] != null) catId = int.tryParse(c['id'].toString());
+          catHcode = c['hcode']?.toString();
         } else if (e['service_category'] != null) {
           // Public API format: service_category object
           final sc = e['service_category'];
           if (sc is Map) {
              cat = sc['serviceCategoryName']?.toString() ?? 'Service';
              categoryImageUrl = sc['picture_url']?.toString();
+             if (sc['id'] != null) catId = int.tryParse(sc['id'].toString());
+             catHcode = sc['hcode']?.toString();
           }
         } else {
           final rawCat = e['category'];
           if (rawCat is Map) {
             cat = rawCat['name']?.toString() ?? 'Service';
             categoryImageUrl = rawCat['picture_url']?.toString();
+            if (rawCat['id'] != null) catId = int.tryParse(rawCat['id'].toString());
+            catHcode = rawCat['hcode']?.toString();
           } else {
             cat = (rawCat ?? e['service_name'] ?? 'Service').toString();
           }
@@ -1391,6 +1398,8 @@ class _HomeScreenState extends State<HomeScreen> {
           phoneNumber: phone,
           description: desc,
           categoryImageUrl: categoryImageUrl,
+          categoryId: catId,
+          hcode: catHcode,
         ));
       }
       
@@ -1490,12 +1499,15 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       
       // Only fit to sellers if we have results and we are in map view
+      /* 
+      // Disabled Auto-Fit to prevent map jumping when filters change (User Request).
       if (_sellers.isNotEmpty && _locationViewIndex == 1) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final sellers = _nearbySellers(categories: _selectedCategories.isNotEmpty ? _selectedCategories : null);
           _fitToSellers(sellers);
         });
       }
+      */
     }
   }
 
@@ -1507,6 +1519,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _checkLocationPermission();
     _loadRole();
     _loadCachedCategories();
+    _fetchApiCategories(); // Fetch fresh categories to populate ID/HCode maps
     _loadSavedBiz();
     _fetchGridCategories();
     // Load sellers when app starts
@@ -1535,6 +1548,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadCachedCategories() async {
     final prefs = await SharedPreferences.getInstance();
+    // Try v2 (full objects) first
+    final cachedV2 = prefs.getString('cached_categories_v2');
+    if (cachedV2 != null) {
+       try {
+          final List<dynamic> list = json.decode(cachedV2);
+          final names = <String>[];
+          _apiCatCodes.clear();
+          _apiCatIds.clear();
+          _apiCatImages.clear();
+          _allRawCategories = List<Map<String, dynamic>>.from(list);
+          
+          for (final e in list) {
+             final name = e['name']?.toString() ?? '';
+             if (name.isEmpty) continue;
+             
+             final h = e['hcode']?.toString();
+             final isRoot = (h != null && !h.contains('.'));
+             if (isRoot) names.add(name);
+             
+             if (h != null && h.isNotEmpty) _apiCatCodes[_norm(name)] = h;
+             if (e['id'] != null) _apiCatIds[_norm(name)] = int.tryParse(e['id'].toString()) ?? 0;
+             if (e['picture_url'] != null) _apiCatImages[_norm(name)] = e['picture_url'].toString();
+          }
+           setState(() {
+             _apiCategories = names;
+           });
+           return; 
+       } catch (_) {}
+    }
+
+    // Fallback to v1 (names only)
     final cached = prefs.getString('cached_categories');
     if (cached != null) {
       try {
@@ -2685,6 +2729,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (_selectedSeller != null) setState(() => _selectedSeller = null); 
               },
               onPositionChanged: (position, hasGesture) {
+                setState(() {}); // Rebuild for zoom-dependent marker changes
                 if (!hasGesture) return;
                 if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
                 _debounceTimer = Timer(const Duration(milliseconds: 300), () {
@@ -2755,7 +2800,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     }
                     
-                    markers.add(_buildSellerMarkerAt(s, adjustedPos));
+                    markers.add(_buildSellerMarker(s, position: adjustedPos));
                   }
                   
                   return MarkerLayer(markers: markers);
@@ -2791,12 +2836,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 8),
                 // Fit to show all sellers
                 _zoomButton(Icons.fit_screen, () {
-                  final sellers = _nearbySellers(
-                    categories: _selectedCategories.isNotEmpty ? _selectedCategories : null,
-                  );
+                  /*
+                  // Removed auto-fit on map ready to prevent persistent zooming out.
+                  // User must manually click "Fit Screen" if they want to see all sellers.
                   if (sellers.isNotEmpty) {
-                    _fitToSellers(sellers);
+                    _fitToSellers(sellers, isManual: true);
                   }
+                  */
                 }),
               ],
             ),
@@ -3196,10 +3242,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: OutlinedButton.icon(
                         onPressed: () {
                           setState(() => _locationViewIndex = 1);
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            final sellers = _nearbySellers(categories: _selectedCategories.isNotEmpty ? _selectedCategories : null);
-                            _fitToSellers(sellers);
-                          });
                         },
                         icon: const Icon(Icons.map_outlined, size: 16, color: Color(0xFF1A1A1A)),
                         label: Text('Map', style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
@@ -3223,82 +3265,145 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SizedBox(
                 height: 34,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    ..._selectedCategories.map((cat) => Padding(
-                          padding: const EdgeInsets.only(right: 6),
-                          child: InkWell(
-                            onTap: () {
-                              setState(() {
-                                _selectedCategories.remove(cat);
-                                if (_selectedCategories.isEmpty) {
-                                  _selectedLetters.clear();
-                                  _searchQuery = '';
-                                  _searchController.clear();
-                                  _distanceLimitKm = null;
+                child: Builder(
+                  builder: (context) {
+                    // Group categories by Root Category (Level 1 Ancestor)
+                    final Map<String, List<String>> branchGroups = {};
+                    
+                    for (final cat in _selectedCategories) {
+                      String? hcode = _apiCatCodes[_norm(cat)];
+                      if (hcode == null) {
+                         final staticMatch = _allRawCategories.firstWhere(
+                            (e) => _norm(e['name'].toString()) == _norm(cat), orElse: () => {});
+                         if (staticMatch.isNotEmpty) hcode = staticMatch['hcode']?.toString();
+                      }
+                      if (hcode == null) {
+                         for (final s in _sellers) { if (_norm(s.category) == _norm(cat)) { hcode = s.hcode; break; } }
+                      }
+
+                      String key;
+                      if (hcode != null && hcode.isNotEmpty && hcode.contains('.')) {
+                          // Group by ROOT category (e.g. '1' from '1.7')
+                          key = hcode.split('.').first;
+                      } else {
+                          // Root or unknown or top-level itself
+                          key = hcode ?? 'root_${cat}';
+                      }
+                      branchGroups.putIfAbsent(key, () => []).add(cat);
+                    }
+                    
+                    final sortedKeys = branchGroups.keys.toList();
+                    sortedKeys.sort((k1, k2) {
+                        final List<String> l1 = branchGroups[k1]!;
+                        final List<String> l2 = branchGroups[k2]!;
+                        l1.sort(); l2.sort(); // Sort inside for consistent firstName
+                        return l1.first.toLowerCase().compareTo(l2.first.toLowerCase());
+                    });
+                    
+                    final List<Widget> breadcrumbChips = [];
+                    
+                    for (int i = 0; i < sortedKeys.length; i++) {
+                      final cats = branchGroups[sortedKeys[i]]!;
+                      
+                      cats.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+                      final firstName = cats.first;
+                      final extraCount = cats.length - 1;
+                      
+                      // Build the display text
+                      String displayText = firstName;
+                      if (extraCount > 0) {
+                        displayText = '$firstName +$extraCount';
+                      }
+                      
+                      // Prefix Root if valid root ID
+                      final rootId = sortedKeys[i];
+                      // Check if key is a simple integer (Root ID)
+                      if (int.tryParse(rootId) != null) {
+                          final rMatch = _allRawCategories.firstWhere((e) => e['hcode'].toString() == rootId, orElse: () => {});
+                          if (rMatch.isNotEmpty) {
+                              final rName = rMatch['name'];
+                              if (rName != null && _norm(rName) != _norm(firstName)) {
+                                  // Ensure we don't repeat if the category IS the root
+                                  displayText = '$rName > $displayText';
+                              }
+                          }
+                      }
+                      
+                      // Add separator before (except first)
+                      if (i > 0) {
+                        breadcrumbChips.add(
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: Icon(Icons.chevron_right, size: 16, color: Colors.grey[600]),
+                          ),
+                        );
+                      }
+                      
+                      // Determine what to open when tapped
+                      // Always show subcategories of the first selected category at this level
+                      
+                      breadcrumbChips.add(
+                        InkWell(
+                          onTap: () {
+                             // Find the root category for the selected item to open the correct tab
+                             String targetTab = _apiCategories.isNotEmpty ? _apiCategories.first : 'Artisan';
+                             String? hcode = _apiCatCodes[_norm(firstName)];
+                             
+                             if (hcode == null) {
+                                final staticMatch = _allRawCategories.firstWhere(
+                                   (e) => _norm(e['name'].toString()) == _norm(firstName), orElse: () => {});
+                                if (staticMatch.isNotEmpty) hcode = staticMatch['hcode']?.toString();
+                             }
+                             
+                             if (hcode == null) {
+                                 for (final s in _sellers) {
+                                    if (_norm(s.category) == _norm(firstName)) {
+                                       hcode = s.hcode; break;
+                                    }
+                                 }
+                             }
+
+                             if (hcode != null) {
+                                final rootId = hcode.split('.').first;
+                                final rootMatch = _allRawCategories.firstWhere(
+                                   (e) => e['hcode'].toString() == rootId, orElse: () => {});
+                                if (rootMatch.isNotEmpty) {
+                                   final rName = rootMatch['name'].toString();
+                                   if (_apiCategories.contains(rName)) targetTab = rName;
                                 }
-                              });
-                              _sellerLoadDebounce?.cancel();
-                              _sellerLoadDebounce = Timer(const Duration(milliseconds: 350), () async { await _loadSellersForCategories(); });
-                            },
-                            borderRadius: BorderRadius.circular(10),
-                            child: Stack(
-                              alignment: Alignment.topRight,
+                             }
+                             
+                             _showCombinedFilterSheet(parentCategory: targetTab);
+                          },
+                          borderRadius: BorderRadius.circular(11),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFAF7F0),
+                              borderRadius: BorderRadius.circular(11),
+                              border: Border.all(color: const Color(0xFFCDDC39), width: 1.1),
+                              boxShadow: [
+                                BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 3, offset: const Offset(0, 1)),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFAF7F0),
-                                    borderRadius: BorderRadius.circular(11),
-                                    border: Border.all(color: const Color(0xFFCDDC39), width: 1.1),
-                                    boxShadow: [
-                                      BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 3, offset: const Offset(0, 1)),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(Icons.label_important_outline, size: 15, color: Color(0xFF6B7280)),
-                                      const SizedBox(width: 5),
-                                      Text(cat, style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
-                                    ],
-                                  ),
-                                ),
-                                Positioned(
-                                  top: 2,
-                                  right: 2,
-                                  child: InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        _selectedCategories.remove(cat);
-                                        if (_selectedCategories.isEmpty) {
-                                          _selectedLetters.clear();
-                                          _searchQuery = '';
-                                          _searchController.clear();
-                                          _distanceLimitKm = null;
-                                        }
-                                      });
-                                      _sellerLoadDebounce?.cancel();
-                                      _sellerLoadDebounce = Timer(const Duration(milliseconds: 350), () async { await _loadSellersForCategories(); });
-                                    },
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Container(
-                                      width: 16,
-                                      height: 16,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF1A1A1A).withOpacity(0.06),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: const Icon(Icons.close, size: 10, color: Color(0xFF4A4A4A)),
-                                    ),
-                                  ),
-                                ),
+                                const Icon(Icons.label_important_outline, size: 15, color: Color(0xFF6B7280)),
+                                const SizedBox(width: 5),
+                                Text(displayText, style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
                               ],
                             ),
                           ),
-                        )),
-                  ],
+                        ),
+                      );
+                    }
+                    
+                    return ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: breadcrumbChips,
+                    );
+                  },
                 ),
               ),
             ),
@@ -3422,18 +3527,22 @@ class _HomeScreenState extends State<HomeScreen> {
                           maxZoom: 18.0,
                           onTap: (_, __) { if (_selectedSeller != null) setState(() => _selectedSeller = null); },
                           onMapEvent: (event) { if (_selectedSeller != null) setState(() => _selectedSeller = null); },
-                  onPositionChanged: (position, hasGesture) {
-                    if (!hasGesture) return;
-                    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
-                    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
-                      _updateDistanceBasedOnMapBounds();
-                    });
+                  onPositionChanged: (p, hasGesture) {
+                     // Trigger rebuild on zoom change to update markers
+                     setState(() {});
+                     
+                     // Debounce map updates to avoid spamming API
+                     if (hasGesture) {
+                       _sellerLoadDebounce?.cancel();
+                       _sellerLoadDebounce = Timer(const Duration(milliseconds: 600), () {
+                         _updateDistanceBasedOnMapBounds();
+                       });
+                     }
                   },
-                          interactionOptions: const InteractionOptions(
-                            enableScrollWheel: true,
-                            enableMultiFingerGestureRace: true,
-                          ),
-                        ),
+                  interactionOptions: const InteractionOptions(
+                    flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                  ),
+                ),
                         children: [
                           TileLayer(
                             urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
@@ -3935,7 +4044,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _fitToSellers(List<Seller> sellers) {
+  void _fitToSellers(List<Seller> sellers, {bool isManual = false}) {
+    if (sellers.isEmpty) return;
+    if (!isManual) return; // Only fit if explicitly requested by user (button click)
     final points = <LatLng>[];
     points.add(_currentPosition);
     points.addAll(sellers.map((s) => s.position));
@@ -4270,3 +4381,528 @@ class _CurvedNavBarPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+// Helper classes for the hierarchical filter tree
+class _CategoryNode {
+  final String name;
+  final String? id;
+  final String? hcode;
+  final String? imageUrl;
+  bool isExpanded;
+  List<_CategoryNode>? children;
+  bool isLoading;
+
+  _CategoryNode({
+    required this.name,
+    this.id,
+    this.hcode,
+    this.imageUrl,
+    this.isExpanded = false,
+    this.children,
+    this.isLoading = false,
+  });
+}
+
+// Private widget to handle the complex state of the Split-View Filter Sheet
+class _FilterSheetContent extends StatefulWidget {
+  final String initialTab;
+  final List<String> rootCategories;
+  final Map<String, int> apiCatIds;
+  final Map<String, String> apiCatCodes;
+  final List<Seller> sellers;
+  final List<dynamic> rawCategories;
+  final Set<String> tempSelectedCategories;
+  final List<int> tempSelectedCategoryIds;
+  final double? distance;
+  final Function(Set<String>, List<int>, double?) onApply;
+
+  const _FilterSheetContent({
+    required this.initialTab,
+    required this.rootCategories,
+    required this.apiCatIds,
+    required this.apiCatCodes,
+    required this.sellers,
+    required this.rawCategories,
+    required this.tempSelectedCategories,
+    required this.tempSelectedCategoryIds,
+    required this.distance,
+    required this.onApply,
+  });
+
+  @override
+  _FilterSheetContentState createState() => _FilterSheetContentState();
+}
+
+class _FilterSheetContentState extends State<_FilterSheetContent> {
+  late String _currentTab;
+  // Cache for tab children: TabName -> List<Node>
+  final Map<String, List<_CategoryNode>> _tabCache = {};
+  bool _isLoadingTab = false;
+  double? _currentDistance;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentTab = widget.initialTab;
+    _currentDistance = widget.distance;
+    
+    // Load initial tab immediately
+    if (_currentTab.isNotEmpty) {
+      _loadTab(_currentTab);
+    }
+  }
+
+  void _loadTab(String tabName) {
+    if (_tabCache.containsKey(tabName)) return;
+
+    setState(() => _isLoadingTab = true);
+
+    final int? pId = widget.apiCatIds[_norm(tabName)];
+    final String? pHcode = widget.apiCatCodes[_norm(tabName)];
+
+    fetchChildrenFor(tabName, pHcode, pId).then((nodes) {
+      if (mounted) {
+        setState(() {
+          _tabCache[tabName] = nodes;
+          _isLoadingTab = false;
+          _autoExpandDeepMatches(nodes);
+        });
+      }
+    });
+  }
+
+  // Reuse the dynamic fetch logic
+  Future<List<_CategoryNode>> fetchChildrenFor(String pName, String? pHcode, int? pId) async {
+      // 1. Sellers
+      final Set<String> foundNames = {};
+      final List<_CategoryNode> results = [];
+      
+      if (pHcode != null) {
+         final prefix = '$pHcode.';
+         for (final s in widget.sellers) {
+            final sHcode = s.hcode;
+            if (sHcode != null && sHcode.startsWith(prefix)) {
+               if (sHcode.split('.').length == pHcode.split('.').length + 1) {
+                  final sCatName = s.category;
+                   if (!foundNames.contains(sCatName)) {
+                      foundNames.add(sCatName);
+                      results.add(_CategoryNode(
+                         name: sCatName,
+                         id: s.categoryId?.toString(),
+                         hcode: s.hcode,
+                         imageUrl: s.categoryImageUrl
+                      ));
+                   }
+               }
+            }
+         }
+      }
+      
+      // 2. Static
+      if (pHcode != null) {
+          final prefix = '$pHcode.';
+          final staticSubs = widget.rawCategories.where((e) {
+             final h = e['hcode']?.toString();
+             return h != null && h.startsWith(prefix) && h.split('.').length == pHcode.split('.').length + 1;
+          });
+          for (final sub in staticSubs) {
+              final name = sub['name']?.toString();
+              if (name != null && !foundNames.contains(name)) {
+                  foundNames.add(name);
+                  results.add(_CategoryNode(
+                     name: name,
+                     id: sub['id']?.toString(),
+                     hcode: sub['hcode']?.toString(),
+                     imageUrl: sub['picture_url']?.toString()
+                  ));
+              }
+          }
+      }
+      
+      // 3. API - Always fetch to ensure we find all server-side categories
+      if (pId != null) {
+          try {
+             final list = await ApiService().getCategories(parentId: pId);
+             for (final e in list) {
+                 final name = e['name']?.toString() ?? '';
+                 if (name.isNotEmpty && !foundNames.contains(name)) {
+                     // Update parent maps? - Modifying widget props isn't possible directly,
+                     // but these maps are refs to the HomeScreen state maps. 
+                     // We can't modify them safely if they are final in widget?
+                     // They are passed by reference, so modifying the CONTENT of the map is okay.
+                     if (e['hcode'] != null) widget.apiCatCodes[_norm(name)] = e['hcode'].toString();
+                     if (e['id'] != null) widget.apiCatIds[_norm(name)] = int.tryParse(e['id'].toString()) ?? 0;
+                     
+                     results.add(_CategoryNode(
+                        name: name,
+                        id: e['id']?.toString(),
+                        hcode: e['hcode']?.toString(),
+                        imageUrl: e['picture_url']?.toString()
+                     ));
+                 }
+             }
+          } catch (e) {
+             print('Error fetching subcats: $e');
+          }
+      }
+      
+      results.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      return results;
+  }
+  
+  // Normalization helper
+  String _norm(String s) => s.toLowerCase().trim();
+
+  void _autoExpandDeepMatches(List<_CategoryNode> nodes) {
+    if (widget.tempSelectedCategories.isEmpty) return;
+
+    for (final node in nodes) {
+       final nodeHcode = node.hcode;
+       if (nodeHcode == null) continue;
+       
+       // Check if this node is an ancestor of any selected category
+       bool isAncestor = false;
+       for (final selected in widget.tempSelectedCategories) {
+          final sHcode = widget.apiCatCodes[_norm(selected)];
+          if (sHcode != null && sHcode.startsWith('$nodeHcode.') && sHcode != nodeHcode) {
+             isAncestor = true;
+             break;
+          }
+       }
+       
+       if (isAncestor) {
+          setState(() => node.isExpanded = true);
+          if (node.children == null || node.children!.isEmpty) {
+             setState(() => node.isLoading = true);
+             fetchChildrenFor(node.name, node.hcode, int.tryParse(node.id ?? '0')).then((children) {
+                 if (mounted) {
+                    setState(() {
+                       node.children = children;
+                       node.isLoading = false;
+                    });
+                    _autoExpandDeepMatches(children);
+                 }
+             });
+          } else {
+             _autoExpandDeepMatches(node.children!);
+          }
+       }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, scrollController) {
+        // We use scrollController for the Right Panel (content)
+        
+        return Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Color(0xFFEEEEEE))),
+              ),
+              child: Row(
+                children: [
+                   // Back button if in deep view? No, tabs handle top level.
+                  Text("Filters", style: GoogleFonts.playfairDisplay(fontSize: 20, fontWeight: FontWeight.bold)),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Content Row (Split View)
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Left Panel: Navigation Tabs
+                  Container(
+                    width: 130, // Fixed width for master list
+                    color: const Color(0xFFF7F7F7),
+                    child: ListView.builder(
+                      itemCount: widget.rootCategories.length,
+                      itemBuilder: (context, index) {
+                        final tabName = widget.rootCategories[index];
+                        final isSelected = tabName == _currentTab;
+                        
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              _currentTab = tabName;
+                              _loadTab(tabName);
+                            });
+                          },
+                          child: Container(
+                            color: isSelected ? Colors.white : Colors.transparent,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                            child: Row(
+                              children: [
+                                // Indicator strip
+                                if (isSelected)
+                                  Container(width: 4, height: 24, decoration: BoxDecoration(color: const Color(0xFFCDDC39), borderRadius: BorderRadius.circular(2))),
+                                if (isSelected) const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    tabName,
+                                    style: GoogleFonts.lato(
+                                      fontSize: 14,
+                                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                      color: isSelected ? Colors.black : Colors.grey[600],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  
+                  // Right Panel: Subcategories Tree
+                  Expanded(
+                    child: _isLoadingTab 
+                        ? const Center(child: CircularProgressIndicator())
+                        : _tabCache[_currentTab] == null || _tabCache[_currentTab]!.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.category_outlined, size: 40, color: Colors.grey),
+                                      const SizedBox(height: 12),
+                                      Text("No sub-categories", style: GoogleFonts.lato(color: Colors.grey, fontSize: 13)),
+                                    ],
+                                  ),
+                                )
+                              : ListView(
+                                  controller: scrollController,
+                                  padding: const EdgeInsets.all(0),
+                                  children: _buildTreeNodes(_tabCache[_currentTab]!, 0),
+                                ),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Footer
+            Container(
+               padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + MediaQuery.of(context).padding.bottom),
+               decoration: const BoxDecoration(
+                 color: Colors.white,
+                 border: Border(top: BorderSide(color: Color(0xFFEEEEEE))),
+               ),
+               child: Column(
+                 mainAxisSize: MainAxisSize.min,
+                 children: [
+                   // Distance Filter (Chips style)
+                   Row(
+                     children: [
+                       Text('Distance:', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.bold)),
+                       const SizedBox(width: 12),
+                       Expanded(
+                         child: SingleChildScrollView(
+                           scrollDirection: Axis.horizontal,
+                           child: Row(
+                             children: [5, 10, 15, 25, 50, null].map((dist) {
+                               final bool isSelected;
+                               if (dist == null) {
+                                 isSelected = _currentDistance == null;
+                               } else {
+                                 isSelected = _currentDistance != null && (_currentDistance! - dist).abs() < 1.0;
+                               }
+                               
+                               return Padding(
+                                 padding: const EdgeInsets.only(right: 8),
+                                 child: InkWell(
+                                   onTap: () => setState(() => _currentDistance = dist?.toDouble()),
+                                   borderRadius: BorderRadius.circular(16),
+                                   child: Container(
+                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                     decoration: BoxDecoration(
+                                       color: isSelected ? const Color(0xFFCDDC39) : const Color(0xFFF5F5F5),
+                                       borderRadius: BorderRadius.circular(16),
+                                       border: Border.all(color: isSelected ? const Color(0xFFB0C926) : Colors.transparent),
+                                     ),
+                                     child: Text(
+                                       dist == null ? 'All' : '< $dist km',
+                                       style: GoogleFonts.lato(
+                                         fontSize: 11,
+                                         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                         color: const Color(0xFF1A1A1A),
+                                       ),
+                                     ),
+                                   ),
+                                 ),
+                               );
+                             }).toList(),
+                           ),
+                         ),
+                       ),
+                     ],
+                   ),
+                   const SizedBox(height: 12),
+                   
+                   // Action Buttons
+                   Row(
+                     children: [
+                       Expanded(
+                         child: OutlinedButton(
+                           onPressed: () {
+                             setState(() {
+                                widget.tempSelectedCategories.clear();
+                                widget.tempSelectedCategoryIds.clear();
+                                _currentDistance = 50.0;
+                             });
+                           },
+                           style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 8),
+                              side: const BorderSide(color: Color(0xFFE0E0E0)),
+                              minimumSize: const Size(0, 42),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                           ),
+                           child: Text("Clear All", style: GoogleFonts.lato(fontSize: 13, color: Colors.black)),
+                         ),
+                       ),
+                       const SizedBox(width: 12),
+                       Expanded(
+                         child: ElevatedButton(
+                           onPressed: () => widget.onApply(widget.tempSelectedCategories, widget.tempSelectedCategoryIds, _currentDistance),
+                           style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFCDDC39),
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(vertical: 0),
+                              minimumSize: const Size(0, 42),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              elevation: 0,
+                           ),
+                           child: Text("Apply filters", style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.bold)),
+                         ),
+                       ),
+                     ],
+                   ),
+                 ],
+               ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Recursive Tree Builder for Right Panel
+  List<Widget> _buildTreeNodes(List<_CategoryNode> nodes, int level) {
+      final List<Widget> widgets = [];
+      for (final node in nodes) {
+          final bool isSelected = widget.tempSelectedCategories.contains(node.name);
+          
+          widgets.add(
+             InkWell(
+               onTap: () {
+                   // Prevent expansion for deep nodes (Level 3+)
+                   if (node.hcode != null && node.hcode!.split('.').length >= 3) return;
+
+                   // Expand/Collapse logic for Right Panel items
+                   setState(() {
+                      node.isExpanded = !node.isExpanded;
+                      if (node.isExpanded && node.children == null) {
+                         node.isLoading = true;
+                         // Fetch deeper children
+                         int? pId = node.id != null ? int.tryParse(node.id!) : widget.apiCatIds[_norm(node.name)];
+                         fetchChildrenFor(node.name, node.hcode, pId).then((children) {
+                            if (mounted) {
+                               setState(() {
+                                  node.children = children;
+                                  node.isLoading = false;
+                               });
+                            }
+                         });
+                      }
+                   });
+               },
+               child: Container(
+                 padding: EdgeInsets.only(left: 12.0 + (level * 16.0), top: 12, bottom: 12, right: 12),
+                 decoration: BoxDecoration(
+                    color: node.isExpanded ? const Color(0xFFF9F9F9) : Colors.transparent,
+                    border: Border(bottom: BorderSide(color: Colors.grey[100]!)),
+                 ),
+                 child: Row(
+                   children: [
+                     // Checkbox for selection
+                     SizedBox(
+                       width: 20, height: 20,
+                       child: Checkbox(
+                         value: isSelected,
+                         activeColor: const Color(0xFFCDDC39),
+                         checkColor: Colors.black,
+                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                         onChanged: (val) {
+                           setState(() {
+                              if (val == true) {
+                                widget.tempSelectedCategories.add(node.name);
+                                int? i = node.id != null ? int.tryParse(node.id!) : widget.apiCatIds[_norm(node.name)];
+                                if (i != null) widget.tempSelectedCategoryIds.add(i);
+                              } else {
+                                widget.tempSelectedCategories.remove(node.name);
+                                int? i = node.id != null ? int.tryParse(node.id!) : widget.apiCatIds[_norm(node.name)];
+                                if (i != null) widget.tempSelectedCategoryIds.remove(i);
+                              }
+                           });
+                         },
+                       ),
+                     ),
+                     const SizedBox(width: 10),
+                     // Name
+                     Expanded(
+                       child: Text(
+                         node.name,
+                         style: GoogleFonts.lato(fontSize: 13, color: Colors.black87, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400),
+                       ),
+                     ),
+                     // Expand arrow
+                      if (node.isLoading)
+                         const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                      else if (node.hcode != null && node.hcode!.split('.').length >= 3)
+                         const SizedBox(width: 18) 
+                      else
+                         Icon(node.isExpanded ? Icons.expand_less : Icons.keyboard_arrow_right, size: 18, color: Colors.grey),
+                   ],
+                 ),
+               ),
+             )
+          );
+          
+          if (node.isExpanded && node.children != null) {
+              if (node.children!.isEmpty) {
+                 widgets.add(Padding(
+                    padding: EdgeInsets.only(left: 28.0 + ((level+1)*16), top:8, bottom:8),
+                    child: Text("No further sub-categories", style: GoogleFonts.lato(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey)),
+                 ));
+              } else {
+                 widgets.addAll(_buildTreeNodes(node.children!, level + 1));
+              }
+          }
+      }
+      return widgets;
+  }
+}
+
+
+
+
+
+
+
+
+
+

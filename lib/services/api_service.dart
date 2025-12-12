@@ -331,6 +331,17 @@ class ApiService {
     return _handleResponse(response);
   }
 
+  /// Fetch current logged-in user's profile info including picture_url
+  /// GET /api/accounts/me
+  Future<Map<String, dynamic>> getAccountMe() async {
+    final headers = await _getHeaders(auth: true);
+    final response = await http.get(
+      Uri.parse('$baseUrl/accounts/me'),
+      headers: headers,
+    );
+    return _handleResponse(response);
+  }
+
   Map<String, dynamic> _handleResponse(http.Response response) {
 
     print('API Response: ${response.statusCode} ${response.body}');
