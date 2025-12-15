@@ -409,7 +409,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Text(
                             'Pinned Sellers',
                             style: GoogleFonts.lato(
-                              fontSize: 11,
+                              fontSize: 14,
                               fontWeight: FontWeight.w700,
                               color: _tabIndex == 0 ? const Color(0xFF2C3E50) : const Color(0xFF9CA3AF),
                             ),
@@ -452,7 +452,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Text(
                             'Recently Viewed',
                             style: GoogleFonts.lato(
-                              fontSize: 11,
+                              fontSize: 14,
                               fontWeight: FontWeight.w700,
                               color: _tabIndex == 1 ? const Color(0xFF2C3E50) : const Color(0xFF9CA3AF),
                             ),
@@ -495,7 +495,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Text(
                               _tabIndex == 0 ? 'No pinned sellers' : 'No recent views',
                               style: GoogleFonts.playfairDisplay(
-                                fontSize: 14,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF2C3E50),
                               ),
@@ -506,7 +506,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ? 'Save your favorite sellers here'
                                   : 'Start exploring to see history',
                               style: GoogleFonts.lato(
-                                fontSize: 11,
+                                fontSize: 13,
                                 color: const Color(0xFF6B7280),
                               ),
                             ),
@@ -531,7 +531,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 child: Text(
                                   'Explore Now',
                                   style: GoogleFonts.lato(
-                                    fontSize: 11,
+                                    fontSize: 13,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white,
                                   ),

@@ -2797,7 +2797,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             'Recently Viewed',
             style: GoogleFonts.playfairDisplay(
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF1A1A1A),
             ),
@@ -2826,7 +2826,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             'Saved Biz',
             style: GoogleFonts.playfairDisplay(
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF1A1A1A),
             ),
@@ -3060,9 +3060,9 @@ class _HomeScreenState extends State<HomeScreen> {
           LayoutBuilder(
             builder: (context, constraints) {
               final sellers = _nearbySellers(categories: _selectedCategories.isNotEmpty ? _selectedCategories : null);
-              const crossAxisCount = 4;
+              const crossAxisCount = 3;
               const spacing = 10.0;
-              const aspect = 1.0;
+              const aspect = 0.75;
               final tileWidth = (constraints.maxWidth - spacing * (crossAxisCount - 1)) / crossAxisCount;
               final tileHeight = tileWidth / aspect;
               final safeBottom = MediaQuery.of(context).padding.bottom + 58.0;
@@ -3116,13 +3116,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Stack(
                     children: [
                       GridView.builder(
-                        padding: const EdgeInsets.only(top: 10, left: 10, right: 10),
+                        padding: const EdgeInsets.only(top: 10, left: 12, right: 12, bottom: 90),
                         physics: const AlwaysScrollableScrollPhysics(),
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4, 
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 8,
-                          childAspectRatio: 0.7, 
+                          crossAxisCount: 3, // 3 columns for bigger cards
+                          mainAxisSpacing: 14,
+                          crossAxisSpacing: 10,
+                          childAspectRatio: 0.75, // Slightly taller cards
                         ),
                         itemCount: sellers.length,
                         itemBuilder: (context, index) {
@@ -3325,8 +3325,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 alignment: Alignment.center,
                 children: [
                   Container(
-                    width: 40, 
-                    height: 40,
+                    width: 52, 
+                    height: 52,
                     decoration: BoxDecoration(
                       color: const Color(0xFFF5F5F5),
                       shape: BoxShape.circle,
@@ -3342,7 +3342,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: Text(
                                   dn.isNotEmpty ? dn[0].toUpperCase() : '?',
                                   style: GoogleFonts.playfairDisplay(
-                                    fontSize: 14,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.black87,
                                   ),
@@ -3354,7 +3354,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Text(
                               dn.isNotEmpty ? dn[0].toUpperCase() : '?',
                               style: GoogleFonts.playfairDisplay(
-                                fontSize: 14,
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87,
                               ),
@@ -3410,16 +3410,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.lato(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF1A1A1A)),
+                style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF1A1A1A)),
               ),
               if (showCat) ...[
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   dc,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.lato(fontSize: 9, color: const Color(0xFF757575), fontWeight: FontWeight.w500),
+                  style: GoogleFonts.lato(fontSize: 11, color: const Color(0xFF757575), fontWeight: FontWeight.w500),
                 ),
               ],
             ],
@@ -3478,8 +3478,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 6),
           SizedBox(
-            width: 70,
-            child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: GoogleFonts.lato(fontSize: 11, color: const Color(0xFF1A1A1A))),
+            width: 78,
+            child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
           ),
         ],
       ),
@@ -3536,7 +3536,7 @@ class _HomeScreenState extends State<HomeScreen> {
               title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A)),
+              style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A)),
             ),
           ],
         ),
@@ -3647,6 +3647,10 @@ class _HomeScreenState extends State<HomeScreen> {
   // --- ANDROID UI UPDATE: Improved Nav Item with InkWell ---
   Widget _buildNavItem(int index, IconData icon, String label) {
     final isSelected = _selectedIndex == index;
+    // Soft teal/cyan for selected background
+    const selectedBgColor = Color(0xFF00BCD4); // Teal - modern & premium
+    const selectedTextColor = Color(0xFF1A1A1A); // Dark for readability
+    const unselectedColor = Color(0xFF6B7280); // Darker gray for unselected
     return InkWell(
       onTap: () {
         setState(() {
@@ -3663,7 +3667,7 @@ class _HomeScreenState extends State<HomeScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFCDDC39).withOpacity(0.15) : Colors.transparent,
+          color: isSelected ? selectedBgColor.withOpacity(0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -3672,7 +3676,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Icon(
               icon,
-              color: isSelected ? const Color(0xFF1A1A1A) : const Color(0xFF9E9E9E),
+              color: isSelected ? selectedTextColor : unselectedColor,
               size: 24,
             ),
             const SizedBox(height: 4),
@@ -3680,8 +3684,8 @@ class _HomeScreenState extends State<HomeScreen> {
               label,
               style: GoogleFonts.lato(
                 fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                color: isSelected ? const Color(0xFF1A1A1A) : const Color(0xFF9E9E9E),
+                fontWeight: FontWeight.w700, // Bold for both selected and unselected
+                color: isSelected ? selectedTextColor : unselectedColor,
               ),
             ),
           ],
