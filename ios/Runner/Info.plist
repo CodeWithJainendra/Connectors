@@ -57,7 +57,6 @@
 		<string>We need photo library access to pick your profile photo.</string>
 		<key>NSPhotoLibraryAddUsageDescription</key>
 		<string>We need permission to save photos you capture.</string>
-		
 		<!-- Location Permissions -->
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>We need your location to show nearby listings and sellers in your area.</string>

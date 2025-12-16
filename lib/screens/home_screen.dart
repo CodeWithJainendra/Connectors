@@ -2071,7 +2071,17 @@ class _HomeScreenState extends State<HomeScreen> {
   // --- ANDROID UI UPDATE: Improved Scaffold structure ---
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () async {
+        if (_selectedIndex != 1) {
+          setState(() {
+            _selectedIndex = 1;
+          });
+          return false;
+        }
+        return true;
+      },
+      child: Scaffold(
       extendBody: true,
       appBar: (_selectedIndex == 3) ? null : AppBar(
         centerTitle: false,
@@ -2312,6 +2322,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

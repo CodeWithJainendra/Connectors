@@ -31,6 +31,7 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^3.0.0
   flutter_native_splash: ^2.3.10
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
@@ -39,8 +40,16 @@ flutter:
     - assets/images/Maps/
 
 flutter_native_splash:
-  color: "#0f2027"
-  color_dark: "#0f2027"
+  color: "#FAF7F0"
+  color_dark: "#FAF7F0"
   android: true
   ios: true
   web: false
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/Copilot_20251204_141221.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#FAF7F0"
+  adaptive_icon_foreground: "assets/images/Copilot_20251204_141221.png"
