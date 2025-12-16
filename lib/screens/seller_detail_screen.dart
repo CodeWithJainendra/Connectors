@@ -225,7 +225,7 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> with SingleTick
                                           return Center(
                                             child: Text(
                                               dn.isNotEmpty ? dn[0].toUpperCase() : '?',
-                                              style: GoogleFonts.playfairDisplay(
+                                              style: GoogleFonts.roboto(
                                                 fontSize: 26,
                                                 fontWeight: FontWeight.w700,
                                                 color: const Color(0xFF2C3E50),
@@ -237,7 +237,7 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> with SingleTick
                                     : Center(
                                         child: Text(
                                           dn.isNotEmpty ? dn[0].toUpperCase() : '?',
-                                          style: GoogleFonts.playfairDisplay(
+                                          style: GoogleFonts.roboto(
                                             fontSize: 26,
                                             fontWeight: FontWeight.w700,
                                             color: const Color(0xFF2C3E50),
@@ -252,8 +252,8 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> with SingleTick
                             Text(
                               dn,
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.playfairDisplay(
-                                fontSize: 20,
+                              style: GoogleFonts.roboto(
+                                fontSize: 24,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white,
                                 letterSpacing: 0.3,
@@ -286,8 +286,8 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> with SingleTick
                                   const SizedBox(width: 6),
                                   Text(
                                     dc,
-                                    style: GoogleFonts.lato(
-                                      fontSize: 11,
+                                    style: GoogleFonts.roboto(
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                       color: const Color(0xFFE8D5B7),
                                       letterSpacing: 0.5,
@@ -370,8 +370,8 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> with SingleTick
                                   const SizedBox(width: 8),
                                   Text(
                                     'Services Offered',
-                                    style: GoogleFonts.playfairDisplay(
-                                      fontSize: 14,
+                                    style: GoogleFonts.roboto(
+                                      fontSize: 16,
                                       fontWeight: FontWeight.w700,
                                       color: const Color(0xFF2C3E50),
                                     ),
@@ -393,8 +393,8 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> with SingleTick
                                     onTap: () => setState(() => _showAllServices = !_showAllServices),
                                     child: Text(
                                       _showAllServices ? 'Show less' : '+${services.length - 12} more services',
-                                      style: GoogleFonts.lato(
-                                        fontSize: 10,
+                                      style: GoogleFonts.roboto(
+                                        fontSize: 12,
                                         color: const Color(0xFF1E88E5),
                                         fontStyle: FontStyle.italic,
                                         fontWeight: FontWeight.w700,
@@ -441,8 +441,8 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> with SingleTick
                                 const SizedBox(width: 8),
                                 Text(
                                   'About',
-                                  style: GoogleFonts.playfairDisplay(
-                                    fontSize: 14,
+                                  style: GoogleFonts.roboto(
+                                    fontSize: 16,
                                     fontWeight: FontWeight.w700,
                                     color: const Color(0xFF2C3E50),
                                   ),
@@ -452,8 +452,8 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> with SingleTick
                             const SizedBox(height: 10),
                             Text(
                               hasServices ? cleanDesc : desc,
-                              style: GoogleFonts.lato(
-                                fontSize: 12,
+                              style: GoogleFonts.roboto(
+                                fontSize: 14,
                                 height: 1.6,
                                 color: const Color(0xFF4A5568),
                               ),
@@ -501,7 +501,7 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> with SingleTick
                                     } else {
                                       ScaffoldMessenger.of(context).showSnackBar(
                                         SnackBar(
-                                          content: Text('Phone number not available', style: GoogleFonts.lato(fontSize: 12)),
+                                          content: Text('Phone number not available', style: GoogleFonts.roboto(fontSize: 12)),
                                           backgroundColor: const Color(0xFF2C3E50),
                                         ),
                                       );
@@ -514,10 +514,10 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> with SingleTick
                                       const SizedBox(width: 6),
                                       Text(
                                         'Call Now',
-                                        style: GoogleFonts.lato(
+                                        style: GoogleFonts.roboto(
                                           color: Colors.white,
                                           fontWeight: FontWeight.w700,
-                                          fontSize: 12,
+                                          fontSize: 14,
                                         ),
                                       ),
                                     ],
@@ -559,10 +559,10 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> with SingleTick
                                       const SizedBox(width: 6),
                                       Text(
                                         'See on Map',
-                                        style: GoogleFonts.lato(
+                                        style: GoogleFonts.roboto(
                                           color: const Color(0xFF2C3E50),
                                           fontWeight: FontWeight.w700,
-                                          fontSize: 12,
+                                          fontSize: 14,
                                         ),
                                       ),
                                     ],
@@ -597,8 +597,8 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> with SingleTick
       ),
       child: Text(
         service,
-        style: GoogleFonts.lato(
-          fontSize: 10,
+        style: GoogleFonts.roboto(
+          fontSize: 12,
           color: const Color(0xFF4A5568),
           fontWeight: FontWeight.w500,
         ),
@@ -626,16 +626,16 @@ class _SellerDetailScreenState extends State<SellerDetailScreen> with SingleTick
           const SizedBox(height: 4),
           Text(
             label,
-            style: GoogleFonts.lato(
-              fontSize: 9,
+            style: GoogleFonts.roboto(
+              fontSize: 11,
               color: const Color(0xFF718096),
               fontWeight: FontWeight.w500,
             ),
           ),
           Text(
             value,
-            style: GoogleFonts.lato(
-              fontSize: 11,
+            style: GoogleFonts.roboto(
+              fontSize: 13,
               color: const Color(0xFF2C3E50),
               fontWeight: FontWeight.w700,
             ),

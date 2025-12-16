@@ -30,7 +30,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await _refreshPermissionStatus();
       if (!result.isGranted && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Enable notifications in Settings', style: GoogleFonts.lato(fontSize: 12))),
+          SnackBar(content: Text('Enable notifications in Settings', style: GoogleFonts.roboto(fontSize: 12))),
         );
       }
     } else {
@@ -58,7 +58,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Settings', style: GoogleFonts.playfairDisplay(color: const Color(0xFF1A1A1A))),
+        title: Text('Settings', style: GoogleFonts.roboto(color: const Color(0xFF1A1A1A))),
         backgroundColor: const Color(0xFFFAF7F0),
         elevation: 0,
       ),
@@ -75,8 +75,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             child: SwitchListTile(
               dense: true,
-              title: Text('Notifications', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w600)),
-              subtitle: Text('Allow alerts even when app is closed', style: GoogleFonts.lato(fontSize: 11, color: const Color(0xFF4A4A4A))),
+              title: Text('Notifications', style: GoogleFonts.roboto(fontSize: 12, fontWeight: FontWeight.w600)),
+              subtitle: Text('Allow alerts even when app is closed', style: GoogleFonts.roboto(fontSize: 11, color: const Color(0xFF4A4A4A))),
               value: _notifications,
               onChanged: _setNotifications,
             ),
@@ -110,7 +110,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text('Become a Seller', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w600)),
+                    child: Text('Become a Seller', style: GoogleFonts.roboto(fontSize: 12, fontWeight: FontWeight.w600)),
                   ),
                   const Icon(Icons.chevron_right, size: 18, color: Color(0xFF6B7280)),
                 ],
@@ -124,6 +124,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _sectionTitle(String t) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: Text(t, style: GoogleFonts.playfairDisplay(fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+        child: Text(t, style: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
       );
 }

@@ -136,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           child: Text(
             label,
-            style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+            style: GoogleFonts.roboto(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
           ),
         ),
       ),
@@ -195,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
               elevation: 0,
               backgroundColor: const Color(0xFFFAF7F0),
               foregroundColor: const Color(0xFF1A1A1A),
-              title: Text('India Map', style: GoogleFonts.lato(fontSize: 16, fontWeight: FontWeight.w700)),
+              title: Text('India Map', style: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w700)),
             ),
             body: FutureBuilder<List<Polygon>>(
               future: _loadIndiaPolygons(),
@@ -378,7 +378,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Distance', style: GoogleFonts.playfairDisplay(fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                  Text('Distance', style: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
                   const SizedBox(height: 10),
                   SizedBox(
                     height: 44,
@@ -414,7 +414,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               side: BorderSide(color: const Color(0xFF1A1A1A).withOpacity(0.15), width: 1.2),
                               backgroundColor: const Color(0xFFFAF7F0),
                             ),
-                            child: Text('Clear', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                            child: Text('Clear', style: GoogleFonts.roboto(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
                           ),
                         ),
                       ),
@@ -447,7 +447,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               backgroundColor: const Color(0xFFCDDC39),
                               foregroundColor: const Color(0xFF1A1A1A),
                             ),
-                            child: Text('Apply', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.w700)),
+                            child: Text('Apply', style: GoogleFonts.roboto(fontSize: 12, fontWeight: FontWeight.w700)),
                           ),
                         ),
                       ),
@@ -473,7 +473,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: const Color(0xFF1A1A1A).withOpacity(0.15), width: 1.2),
         ),
-        child: Text(label, style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
+        child: Text(label, style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
       ),
     );
   }
@@ -690,7 +690,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 return Center(
                                   child: Text(
                                     s.name.isNotEmpty ? s.name[0].toUpperCase() : '?',
-                                    style: GoogleFonts.lato(
+                                    style: GoogleFonts.roboto(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w700,
                                       color: const Color(0xFF6B7280),
@@ -702,7 +702,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           : Center(
                               child: Text(
                                 s.name.isNotEmpty ? s.name[0].toUpperCase() : '?',
-                                style: GoogleFonts.lato(
+                                style: GoogleFonts.roboto(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                   color: const Color(0xFF6B7280),
@@ -719,18 +719,18 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Text(
                             _clean(s.name),
-                            style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                            style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             _clean(s.category),
-                            style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF333333)),
+                            style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF333333)),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           Align(
                             alignment: Alignment.bottomLeft,
-                            child: Text('More Info', style: GoogleFonts.lato(fontSize: 9, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                            child: Text('More Info', style: GoogleFonts.roboto(fontSize: 9, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
                           ),
                         ],
                       ),
@@ -865,7 +865,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   return Center(
                                     child: Text(
                                       s.name.isNotEmpty ? s.name[0].toUpperCase() : '?',
-                                      style: GoogleFonts.lato(
+                                      style: GoogleFonts.roboto(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
                                         color: const Color(0xFF6B7280),
@@ -877,7 +877,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             : Center(
                                 child: Text(
                                   s.name.isNotEmpty ? s.name[0].toUpperCase() : '?',
-                                  style: GoogleFonts.lato(
+                                  style: GoogleFonts.roboto(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
                                     color: const Color(0xFF6B7280),
@@ -893,18 +893,18 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Text(
                               _clean(s.name),
-                              style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                              style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
                               _clean(s.category),
-                              style: GoogleFonts.lato(fontSize: 9, color: const Color(0xFF4A4A4A)),
+                              style: GoogleFonts.roboto(fontSize: 9, color: const Color(0xFF4A4A4A)),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             Align(
                               alignment: Alignment.bottomLeft,
-                              child: Text('More Info', style: GoogleFonts.lato(fontSize: 9, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                              child: Text('More Info', style: GoogleFonts.roboto(fontSize: 9, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
                             ),
                           ],
                         ),
@@ -1278,7 +1278,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     'Unable to load sellers',
-                    style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.roboto(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
@@ -1304,7 +1304,7 @@ class _HomeScreenState extends State<HomeScreen> {
             SnackBar(
               content: Text(
                 'Error loading sellers',
-                style: GoogleFonts.lato(fontSize: 13),
+                style: GoogleFonts.roboto(fontSize: 13),
               ),
               backgroundColor: const Color(0xFFFF5252),
               duration: const Duration(seconds: 3),
@@ -1516,7 +1516,7 @@ class _HomeScreenState extends State<HomeScreen> {
               
               Text(
                 'Change Location',
-                style: GoogleFonts.playfairDisplay(
+                style: GoogleFonts.roboto(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF1A1A1A),
@@ -1526,7 +1526,7 @@ class _HomeScreenState extends State<HomeScreen> {
               
               Text(
                 'Search and select your location',
-                style: GoogleFonts.lato(
+                style: GoogleFonts.roboto(
                   fontSize: 13,
                   color: const Color(0xFF4A4A4A),
                 ),
@@ -1553,12 +1553,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                   });
                 },
-                style: GoogleFonts.lato(
+                style: GoogleFonts.roboto(
                   color: const Color(0xFF1A1A1A),
                 ),
                 decoration: InputDecoration(
                   hintText: 'Enter city, state or country',
-                  hintStyle: GoogleFonts.lato(
+                  hintStyle: GoogleFonts.roboto(
                     color: const Color(0xFF6B7280),
                     fontSize: 14,
                   ),
@@ -1633,7 +1633,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         title: Text(
                           location['description'] ?? '',
-                          style: GoogleFonts.lato(
+                          style: GoogleFonts.roboto(
                             fontSize: 13,
                             color: const Color(0xFF1A1A1A),
                           ),
@@ -1679,7 +1679,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         child: Text(
                           'Cancel',
-                          style: GoogleFonts.lato(
+                          style: GoogleFonts.roboto(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -1721,7 +1721,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         child: Text(
                           'Set Location',
-                          style: GoogleFonts.lato(
+                          style: GoogleFonts.roboto(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                           ),
@@ -1788,7 +1788,7 @@ class _HomeScreenState extends State<HomeScreen> {
             
             Text(
               'Enable Location',
-              style: GoogleFonts.playfairDisplay(
+              style: GoogleFonts.roboto(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF1A1A1A),
@@ -1799,7 +1799,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(
               'Allow access to your location to find nearby listings and sellers',
               textAlign: TextAlign.center,
-              style: GoogleFonts.lato(
+              style: GoogleFonts.roboto(
                 fontSize: 13,
                 color: const Color(0xFF4A4A4A),
                 height: 1.4,
@@ -1831,7 +1831,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       child: Text(
                         'Not Now',
-                        style: GoogleFonts.lato(
+                        style: GoogleFonts.roboto(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1858,7 +1858,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       child: Text(
                         'Allow',
-                        style: GoogleFonts.lato(
+                        style: GoogleFonts.roboto(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                         ),
@@ -1935,7 +1935,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showSnackbar(String message, {String? action, VoidCallback? onTap}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: GoogleFonts.lato(fontWeight: FontWeight.w600)),
+        content: Text(message, style: GoogleFonts.roboto(fontWeight: FontWeight.w600)),
         action: action != null ? SnackBarAction(label: action, textColor: Colors.white, onPressed: onTap ?? () {}) : null,
         backgroundColor: const Color(0xFFDC2626),
         behavior: SnackBarBehavior.floating,
@@ -1998,7 +1998,7 @@ class _HomeScreenState extends State<HomeScreen> {
               SnackBar(
                 content: Text(
                   'Session expired. Redirecting to login...',
-                  style: GoogleFonts.lato(fontSize: 13),
+                  style: GoogleFonts.roboto(fontSize: 13),
                 ),
                 backgroundColor: const Color(0xFFFF5252),
                 duration: const Duration(seconds: 2),
@@ -2088,7 +2088,7 @@ class _HomeScreenState extends State<HomeScreen> {
           'Jayantslist',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.playfairDisplay(
+          style: GoogleFonts.roboto(
             fontWeight: FontWeight.w700, 
             color: const Color(0xFF1A1A1A),
             letterSpacing: 0.5,
@@ -2137,12 +2137,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Text(
                             'Your Location',
-                            style: GoogleFonts.lato(fontSize: 11, color: const Color(0xFF6B7280), fontWeight: FontWeight.w600),
+                            style: GoogleFonts.roboto(fontSize: 11, color: const Color(0xFF6B7280), fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             _currentLocation,
-                            style: GoogleFonts.lato(fontSize: 14, color: const Color(0xFF1A1A1A), fontWeight: FontWeight.bold),
+                            style: GoogleFonts.roboto(fontSize: 14, color: const Color(0xFF1A1A1A), fontWeight: FontWeight.bold),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -2193,7 +2193,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           child: Text(
                             'Change',
-                            style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF1A1A1A), fontWeight: FontWeight.bold),
+                            style: GoogleFonts.roboto(fontSize: 12, color: const Color(0xFF1A1A1A), fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
@@ -2241,7 +2241,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                           decoration: InputDecoration(
                             hintText: 'Search nearby sellers...',
-                            hintStyle: GoogleFonts.lato(fontSize: 14, color: const Color(0xFF9CA3AF)),
+                            hintStyle: GoogleFonts.roboto(fontSize: 14, color: const Color(0xFF9CA3AF)),
                             prefixIcon: const Icon(Icons.search_outlined, size: 22, color: Color(0xFF6B7280)),
                             filled: true,
                             fillColor: Colors.white,
@@ -2251,7 +2251,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCDDC39), width: 1.5)),
                           ),
-                          style: GoogleFonts.lato(fontSize: 14),
+                          style: GoogleFonts.roboto(fontSize: 14),
                         ),
                       ),
                     ),
@@ -2336,7 +2336,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Expanded(
                       child: Text(
                         'Notifications',
-                        style: GoogleFonts.playfairDisplay(
+                        style: GoogleFonts.roboto(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF1A1A1A),
@@ -2352,7 +2352,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       child: Text(
                         '$_notificationCount new',
-                        style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                        style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
                       ),
                     ),
                   ],
@@ -2368,7 +2368,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     leading: const Icon(Icons.notifications, size: 18, color: Color(0xFF1A1A1A)),
                     title: Text(
                       _notifications[index],
-                      style: GoogleFonts.lato(fontSize: 13, color: const Color(0xFF1A1A1A), fontWeight: FontWeight.w600),
+                      style: GoogleFonts.roboto(fontSize: 13, color: const Color(0xFF1A1A1A), fontWeight: FontWeight.w600),
                     ),
                   );
                 },
@@ -2543,7 +2543,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 6),
                   Text(
                     '${_nearbySellers(categories: _selectedCategories.isNotEmpty ? _selectedCategories : null).length} sellers',
-                    style: GoogleFonts.lato(
+                    style: GoogleFonts.roboto(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
@@ -2566,7 +2566,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 16),
                     Text(
                       'Loading map...',
-                      style: GoogleFonts.lato(
+                      style: GoogleFonts.roboto(
                         color: const Color(0xFF4A4A4A),
                         fontSize: 14,
                       ),
@@ -2590,7 +2590,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 12),
           Text(
             title,
-            style: GoogleFonts.playfairDisplay(
+            style: GoogleFonts.roboto(
               fontSize: 22,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF1A1A1A),
@@ -2599,7 +2599,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: GoogleFonts.lato(
+            style: GoogleFonts.roboto(
               fontSize: 13,
               color: const Color(0xFF4A4A4A),
             ),
@@ -2619,7 +2619,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: TextButton.icon(
             onPressed: () => _fetchGridCategories(), 
             icon: const Icon(Icons.refresh, color: Color(0xFF1A1A1A)),
-            label: Text('Load Categories', style: GoogleFonts.lato(color: const Color(0xFF1A1A1A)))
+            label: Text('Load Categories', style: GoogleFonts.roboto(color: const Color(0xFF1A1A1A)))
         ),
       );
     }
@@ -2646,7 +2646,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(width: 8),
                     Text(
                       'Back to ${_currentGridParentName ?? 'All'}',
-                      style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF1A1A1A)),
+                      style: GoogleFonts.roboto(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF1A1A1A)),
                     ),
                   ],
                 ),
@@ -2678,7 +2678,7 @@ class _HomeScreenState extends State<HomeScreen> {
                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
                      ScaffoldMessenger.of(context).showSnackBar(
                        SnackBar(
-                         content: Text('Selection cleared', style: GoogleFonts.lato()),
+                         content: Text('Selection cleared', style: GoogleFonts.roboto()),
                          duration: const Duration(milliseconds: 500),
                          behavior: SnackBarBehavior.floating,
                          backgroundColor: const Color(0xFF1A1A1A),
@@ -2688,7 +2688,7 @@ class _HomeScreenState extends State<HomeScreen> {
                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
                      ScaffoldMessenger.of(context).showSnackBar(
                        SnackBar(
-                         content: Text('Opening $name...', style: GoogleFonts.lato()),
+                         content: Text('Opening $name...', style: GoogleFonts.roboto()),
                          duration: const Duration(seconds: 1),
                          behavior: SnackBarBehavior.floating,
                          backgroundColor: const Color(0xFF1A1A1A),
@@ -2748,7 +2748,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               textAlign: TextAlign.center,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.lato(
+                              style: GoogleFonts.roboto(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF1A1A1A),
@@ -2775,7 +2775,7 @@ class _HomeScreenState extends State<HomeScreen> {
           TextField(
             decoration: InputDecoration(
               hintText: 'Search here',
-              hintStyle: GoogleFonts.lato(
+              hintStyle: GoogleFonts.roboto(
                 fontSize: 13,
                 color: const Color(0xFF6B7280),
               ),
@@ -2796,7 +2796,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 14),
           Text(
             'Recently Viewed',
-            style: GoogleFonts.playfairDisplay(
+            style: GoogleFonts.roboto(
               fontSize: 20,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF1A1A1A),
@@ -2825,7 +2825,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 18),
           Text(
             'Saved Biz',
-            style: GoogleFonts.playfairDisplay(
+            style: GoogleFonts.roboto(
               fontSize: 20,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF1A1A1A),
@@ -2866,7 +2866,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: Text(
                     'Nearby Sellers',
-                  style: GoogleFonts.playfairDisplay(
+                  style: GoogleFonts.roboto(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF1A1A1A),
@@ -2888,7 +2888,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: OutlinedButton.icon(
                         onPressed: () => setState(() => _locationViewIndex = 0),
                         icon: const Icon(Icons.grid_on, size: 16, color: Color(0xFF1A1A1A)),
-                        label: Text('List', style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                        label: Text('List', style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
                         style: OutlinedButton.styleFrom(
                           shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
                           side: const BorderSide(color: Colors.transparent, width: 0),
@@ -2904,7 +2904,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           setState(() => _locationViewIndex = 1);
                         },
                         icon: const Icon(Icons.map_outlined, size: 16, color: Color(0xFF1A1A1A)),
-                        label: Text('Map', style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                        label: Text('Map', style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
                         style: OutlinedButton.styleFrom(
                           shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
                           side: const BorderSide(color: Colors.transparent, width: 0),
@@ -3039,7 +3039,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 const Icon(Icons.label_important_outline, size: 15, color: Color(0xFF6B7280)),
                                 const SizedBox(width: 5),
-                                Text(displayText, style: GoogleFonts.lato(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
+                                Text(displayText, style: GoogleFonts.roboto(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
                               ],
                             ),
                           ),
@@ -3083,13 +3083,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text(
                           'No Sellers Found',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                          style: GoogleFonts.roboto(fontSize: 15, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           'Try changing filters or expanding the area',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF6B7280)),
+                          style: GoogleFonts.roboto(fontSize: 12, color: const Color(0xFF6B7280)),
                         ),
                         const SizedBox(height: 16),
                         if (_distanceLimitKm != null)
@@ -3098,7 +3098,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: ElevatedButton.icon(
                               onPressed: _expandSearch,
                               icon: const Icon(Icons.zoom_out_map, size: 18),
-                              label: Text('Expand Area', style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w700)),
+                              label: Text('Expand Area', style: GoogleFonts.roboto(fontSize: 13, fontWeight: FontWeight.w700)),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFFCDDC39),
                                 foregroundColor: const Color(0xFF1A1A1A),
@@ -3241,7 +3241,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       SizedBox(height: 8),
                       Text(
                         'Fetching new Sellers..',
-                        style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
+                        style: GoogleFonts.roboto(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A)),
                       ),
                     ],
                   ),
@@ -3341,7 +3341,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               return Center(
                                 child: Text(
                                   dn.isNotEmpty ? dn[0].toUpperCase() : '?',
-                                  style: GoogleFonts.playfairDisplay(
+                                  style: GoogleFonts.roboto(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.black87,
@@ -3353,7 +3353,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         : Center(
                             child: Text(
                               dn.isNotEmpty ? dn[0].toUpperCase() : '?',
-                              style: GoogleFonts.playfairDisplay(
+                              style: GoogleFonts.roboto(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87,
@@ -3410,7 +3410,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF1A1A1A)),
+                style: GoogleFonts.roboto(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF1A1A1A)),
               ),
               if (showCat) ...[
                 const SizedBox(height: 3),
@@ -3419,7 +3419,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.lato(fontSize: 11, color: const Color(0xFF757575), fontWeight: FontWeight.w500),
+                  style: GoogleFonts.roboto(fontSize: 11, color: const Color(0xFF757575), fontWeight: FontWeight.w500),
                 ),
               ],
             ],
@@ -3472,14 +3472,14 @@ class _HomeScreenState extends State<HomeScreen> {
               child: CircleAvatar(
                 radius: 24,
                 backgroundColor: const Color(0xFFEDE9DF),
-                child: Text(initials, style: GoogleFonts.playfairDisplay(fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                child: Text(initials, style: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
               ),
             ),
           ),
           const SizedBox(height: 6),
           SizedBox(
             width: 78,
-            child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
+            child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: GoogleFonts.roboto(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A))),
           ),
         ],
       ),
@@ -3513,7 +3513,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
-                  child: Text(initials, style: GoogleFonts.playfairDisplay(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                  child: Text(initials, style: GoogleFonts.roboto(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
                 ),
                 Positioned(
                   top: 2,
@@ -3536,7 +3536,7 @@ class _HomeScreenState extends State<HomeScreen> {
               title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A)),
+              style: GoogleFonts.roboto(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF1A1A1A)),
             ),
           ],
         ),
@@ -3565,7 +3565,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 leading: const Icon(Icons.delete_outline, color: Color(0xFFFF5252)),
                 title: Text(
                   'Remove from Saved Biz',
-                  style: GoogleFonts.lato(
+                  style: GoogleFonts.roboto(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF1A1A1A),
@@ -3583,7 +3583,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 onPressed: () => Navigator.pop(ctx),
                 child: Text(
                   'Cancel',
-                  style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF4A4A4A)),
+                  style: GoogleFonts.roboto(fontSize: 12, color: const Color(0xFF4A4A4A)),
                 ),
               ),
             ],
@@ -3682,7 +3682,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 4),
             Text(
               label,
-              style: GoogleFonts.lato(
+              style: GoogleFonts.roboto(
                 fontSize: 11,
                 fontWeight: FontWeight.w700, // Bold for both selected and unselected
                 color: isSelected ? selectedTextColor : unselectedColor,
@@ -3954,7 +3954,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
               ),
               child: Row(
                 children: [
-                  Text("Filters", style: GoogleFonts.playfairDisplay(fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text("Filters", style: GoogleFonts.roboto(fontSize: 20, fontWeight: FontWeight.bold)),
                   const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.close),
@@ -3995,7 +3995,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                                 Expanded(
                                   child: Text(
                                     tabName,
-                                    style: GoogleFonts.lato(
+                                    style: GoogleFonts.roboto(
                                       fontSize: 14,
                                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                                       color: isSelected ? Colors.black : Colors.grey[600],
@@ -4020,7 +4020,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                                     children: [
                                       const Icon(Icons.category_outlined, size: 40, color: Colors.grey),
                                       const SizedBox(height: 12),
-                                      Text("No sub-categories", style: GoogleFonts.lato(color: Colors.grey, fontSize: 13)),
+                                      Text("No sub-categories", style: GoogleFonts.roboto(color: Colors.grey, fontSize: 13)),
                                     ],
                                   ),
                                 )
@@ -4045,7 +4045,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                  children: [
                    Row(
                      children: [
-                       Text('Distance:', style: GoogleFonts.lato(fontSize: 12, fontWeight: FontWeight.bold)),
+                       Text('Distance:', style: GoogleFonts.roboto(fontSize: 12, fontWeight: FontWeight.bold)),
                        const SizedBox(width: 12),
                        Expanded(
                          child: SingleChildScrollView(
@@ -4073,7 +4073,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                                      ),
                                      child: Text(
                                        dist == null ? 'All' : '< $dist km',
-                                       style: GoogleFonts.lato(
+                                       style: GoogleFonts.roboto(
                                          fontSize: 11,
                                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                                          color: const Color(0xFF1A1A1A),
@@ -4107,7 +4107,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                              minimumSize: const Size(0, 42),
                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                            ),
-                           child: Text("Clear All", style: GoogleFonts.lato(fontSize: 13, color: Colors.black)),
+                           child: Text("Clear All", style: GoogleFonts.roboto(fontSize: 13, color: Colors.black)),
                          ),
                        ),
                        const SizedBox(width: 12),
@@ -4122,7 +4122,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                              elevation: 0,
                            ),
-                           child: Text("Apply filters", style: GoogleFonts.lato(fontSize: 13, fontWeight: FontWeight.bold)),
+                           child: Text("Apply filters", style: GoogleFonts.roboto(fontSize: 13, fontWeight: FontWeight.bold)),
                          ),
                        ),
                      ],
@@ -4196,7 +4196,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
                      Expanded(
                        child: Text(
                          node.name,
-                         style: GoogleFonts.lato(fontSize: 13, color: Colors.black87, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400),
+                         style: GoogleFonts.roboto(fontSize: 13, color: Colors.black87, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400),
                        ),
                      ),
                       if (node.isLoading)
@@ -4215,7 +4215,7 @@ class _FilterSheetContentState extends State<_FilterSheetContent> {
               if (node.children!.isEmpty) {
                  widgets.add(Padding(
                     padding: EdgeInsets.only(left: 28.0 + ((level+1)*16), top:8, bottom:8),
-                    child: Text("No further sub-categories", style: GoogleFonts.lato(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey)),
+                    child: Text("No further sub-categories", style: GoogleFonts.roboto(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey)),
                  ));
               } else {
                  widgets.addAll(_buildTreeNodes(node.children!, level + 1));

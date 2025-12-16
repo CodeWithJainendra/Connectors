@@ -87,7 +87,7 @@ Category: $_selectedCategory
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Post shared successfully!', style: GoogleFonts.lato(fontSize: 12)),
+          content: Text('Post shared successfully!', style: GoogleFonts.roboto(fontSize: 12)),
           backgroundColor: const Color(0xFFCDDC39),
           behavior: SnackBarBehavior.floating,
         ),
@@ -99,7 +99,7 @@ Category: $_selectedCategory
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}', 
-            style: GoogleFonts.lato(fontSize: 12)),
+            style: GoogleFonts.roboto(fontSize: 12)),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),
@@ -124,7 +124,7 @@ Category: $_selectedCategory
         ),
         title: Text(
           'New Post',
-          style: GoogleFonts.playfairDisplay(
+          style: GoogleFonts.roboto(
             color: const Color(0xFF1A1A1A),
             fontWeight: FontWeight.w600,
           ),
@@ -134,7 +134,7 @@ Category: $_selectedCategory
             onPressed: _isUploading ? null : _submitPost,
             child: Text(
               'Share',
-              style: GoogleFonts.lato(
+              style: GoogleFonts.roboto(
                 color: const Color(0xFFCDDC39),
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
@@ -160,7 +160,7 @@ Category: $_selectedCategory
                         children: [
                           Icon(Icons.add_photo_alternate_outlined, size: 48, color: const Color(0xFF1A1A1A).withOpacity(0.4)),
                           const SizedBox(height: 8),
-                          Text('Tap to select photo', style: GoogleFonts.lato(color: const Color(0xFF1A1A1A).withOpacity(0.4))),
+                          Text('Tap to select photo', style: GoogleFonts.roboto(color: const Color(0xFF1A1A1A).withOpacity(0.4))),
                         ],
                       ),
               ),
@@ -177,25 +177,25 @@ Category: $_selectedCategory
                     maxLines: 3,
                     decoration: InputDecoration(
                       hintText: 'Write a caption...',
-                      hintStyle: GoogleFonts.lato(color: const Color(0xFF9E9E9E)),
+                      hintStyle: GoogleFonts.roboto(color: const Color(0xFF9E9E9E)),
                       border: InputBorder.none,
                     ),
-                    style: GoogleFonts.lato(fontSize: 14),
+                    style: GoogleFonts.roboto(fontSize: 14),
                   ),
                   const Divider(),
                   
                   // Category Selection
                   ListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text('Category', style: GoogleFonts.lato(fontWeight: FontWeight.w600)),
+                    title: Text('Category', style: GoogleFonts.roboto(fontWeight: FontWeight.w600)),
                     trailing: DropdownButton<String>(
                       value: _selectedCategory,
-                      hint: Text('Select', style: GoogleFonts.lato(fontSize: 14)),
+                      hint: Text('Select', style: GoogleFonts.roboto(fontSize: 14)),
                       underline: Container(),
                       items: _categories.map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
-                          child: Text(value, style: GoogleFonts.lato(fontSize: 14)),
+                          child: Text(value, style: GoogleFonts.roboto(fontSize: 14)),
                         );
                       }).toList(),
                       onChanged: (val) => setState(() => _selectedCategory = val),

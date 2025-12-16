@@ -334,7 +334,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Text(
                             'Jayantslist',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.playfairDisplay(
+                            style: GoogleFonts.roboto(
                               fontSize: 32,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF1A1A1A),
@@ -345,7 +345,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Text(
                             'Welcome back!',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.lato(
+                            style: GoogleFonts.roboto(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
                               color: const Color(0xFF4A4A4A),
@@ -370,7 +370,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       'SMS sent to ${_maskedPhone()}',
                                       key: const ValueKey('otp-info'),
                                       textAlign: TextAlign.center,
-                                      style: GoogleFonts.lato(
+                                      style: GoogleFonts.roboto(
                                         fontSize: 14,
                                         color: const Color(0xFF4A4A4A),
                                         fontWeight: FontWeight.w600,
@@ -423,7 +423,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                             LengthLimitingTextInputFormatter(2),
                                             FilteringTextInputFormatter.allow(RegExp(r'[\d\u200b]')),
                                           ],
-                                          style: GoogleFonts.lato(fontSize: 18, color: const Color(0xFF1A1A1A)),
+                                          style: GoogleFonts.roboto(fontSize: 18, color: const Color(0xFF1A1A1A)),
                                           decoration: InputDecoration(
                                             counterText: '',
                                             contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -533,7 +533,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                               const SizedBox(width: 6),
                                               Text(
                                                 '+${_selectedCountry.phoneCode}',
-                                                style: GoogleFonts.lato(
+                                                style: GoogleFonts.roboto(
                                                   color: const Color(0xFF1A1A1A),
                                                   fontWeight: FontWeight.w500,
                                                   fontSize: 13,
@@ -553,12 +553,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                             controller: _phoneController,
                                             keyboardType: TextInputType.number,
                                             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                            style: GoogleFonts.lato(color: const Color(0xFF1A1A1A), fontSize: 14),
+                                            style: GoogleFonts.roboto(color: const Color(0xFF1A1A1A), fontSize: 14),
                                             decoration: InputDecoration(
                                               labelText: 'Phone Number',
                                               hintText: 'Enter your phone number',
                                               prefixIcon: const Icon(Icons.phone_outlined, color: Color(0xFF4A4A4A), size: 20),
-                                              labelStyle: GoogleFonts.lato(color: const Color(0xFF4A4A4A), fontSize: 13),
+                                              labelStyle: GoogleFonts.roboto(color: const Color(0xFF4A4A4A), fontSize: 13),
                                               filled: true,
                                               fillColor: Colors.white.withOpacity(0.7),
                                               border: OutlineInputBorder(
@@ -622,7 +622,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     )
                                   : Text(
                                       _otpRequested ? 'Verify' : 'Request OTP',
-                                      style: GoogleFonts.lato(fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 0.6),
+                                      style: GoogleFonts.roboto(fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: 0.6),
                                     ),
                             ),
                           ),

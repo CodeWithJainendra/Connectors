@@ -27,7 +27,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Ask AI', style: GoogleFonts.playfairDisplay(color: const Color(0xFF1A1A1A))),
+        title: Text('Ask AI', style: GoogleFonts.roboto(color: const Color(0xFF1A1A1A))),
         backgroundColor: const Color(0xFFFAF7F0),
         elevation: 0,
       ),
@@ -52,7 +52,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     ),
                     child: Text(
                       m.text,
-                      style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF1A1A1A)),
+                      style: GoogleFonts.roboto(fontSize: 12, color: const Color(0xFF1A1A1A)),
                     ),
                   ),
                 );
@@ -75,7 +75,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                       controller: _input,
                       decoration: InputDecoration(
                         hintText: 'Type a message',
-                        hintStyle: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF6B7280)),
+                        hintStyle: GoogleFonts.roboto(fontSize: 12, color: const Color(0xFF6B7280)),
                         isDense: true,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                         filled: true,
@@ -89,7 +89,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                           borderSide: BorderSide(color: Color(0xFFCDDC39), width: 1.2),
                         ),
                       ),
-                      style: GoogleFonts.lato(fontSize: 12),
+                      style: GoogleFonts.roboto(fontSize: 12),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -100,7 +100,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
-                    child: Text('Send', style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF1A1A1A), fontWeight: FontWeight.w700)),
+                    child: Text('Send', style: GoogleFonts.roboto(fontSize: 12, color: const Color(0xFF1A1A1A), fontWeight: FontWeight.w700)),
                   ),
                 ],
               ),

@@ -96,7 +96,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
         print('UI: State updated - _isOtpSent = true, _isLoading = false');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('OTP sent successfully', style: GoogleFonts.lato()),
+            content: Text('OTP sent successfully', style: GoogleFonts.roboto()),
             backgroundColor: const Color(0xFF4CAF50),
           ),
         );
@@ -202,7 +202,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
         ),
         title: Text(
           _isOtpSent ? 'Enter OTP' : 'Enter Phone Number (Debug)',
-          style: GoogleFonts.playfairDisplay(color: const Color(0xFF1A1A1A)),
+          style: GoogleFonts.roboto(color: const Color(0xFF1A1A1A)),
         ),
       ),
       body: SafeArea(
@@ -218,11 +218,11 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
                   children: [
                     Text(
                       'SMS sent to ',
-                      style: GoogleFonts.lato(fontSize: 16, color: const Color(0xFF4A4A4A)),
+                      style: GoogleFonts.roboto(fontSize: 16, color: const Color(0xFF4A4A4A)),
                     ),
                     Text(
                       _phoneController.text,
-                      style: GoogleFonts.lato(
+                      style: GoogleFonts.roboto(
                         fontSize: 16,
                         color: const Color(0xFF1A1A1A),
                         decoration: TextDecoration.underline,
@@ -247,7 +247,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
               else
                 Text(
                   'Enter your phone number to continue',
-                  style: GoogleFonts.lato(fontSize: 16, color: const Color(0xFF4A4A4A)),
+                  style: GoogleFonts.roboto(fontSize: 16, color: const Color(0xFF4A4A4A)),
                   textAlign: TextAlign.center,
                 ),
               const SizedBox(height: 32),
@@ -258,7 +258,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: InputDecoration(
                     hintText: '9876543210',
-                    hintStyle: GoogleFonts.lato(color: const Color(0xFF9E9E9E)),
+                    hintStyle: GoogleFonts.roboto(color: const Color(0xFF9E9E9E)),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(color: Color(0xFFCDDC39)),
@@ -275,7 +275,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
                     fillColor: Colors.white,
                     prefixIcon: const Icon(Icons.phone, color: Color(0xFFCDDC39)),
                   ),
-                  style: GoogleFonts.lato(),
+                  style: GoogleFonts.roboto(),
                 ),
                 const SizedBox(height: 24),
                 if (_debugOtp != null)
@@ -287,7 +287,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
                     ),
                     child: Text(
                       'Debug OTP: $_debugOtp',
-                      style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF1A1A1A)),
+                      style: GoogleFonts.roboto(fontSize: 12, color: const Color(0xFF1A1A1A)),
                     ),
                   ),
                 const SizedBox(height: 24),
@@ -393,7 +393,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
                           filled: true,
                           fillColor: Colors.white,
                         ),
-                        style: GoogleFonts.lato(fontSize: 20, fontWeight: FontWeight.bold),
+                        style: GoogleFonts.roboto(fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                     );
                   }),
@@ -403,7 +403,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
                   onPressed: _sendOtp,
                   child: Text(
                     'Resend OTP',
-                    style: GoogleFonts.lato(color: const Color(0xFFCDDC39)),
+                    style: GoogleFonts.roboto(color: const Color(0xFFCDDC39)),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -417,7 +417,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
                   ),
                   child: Text(
                     _error!,
-                    style: GoogleFonts.lato(fontSize: 12, color: Colors.red),
+                    style: GoogleFonts.roboto(fontSize: 12, color: Colors.red),
                   ),
                 ),
               const SizedBox(height: 24),
@@ -441,7 +441,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
                       )
                     : Text(
                         _isOtpSent ? 'Verify OTP' : 'Send OTP',
-                        style: GoogleFonts.lato(
+                        style: GoogleFonts.roboto(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -450,7 +450,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
               const Spacer(),
               Text(
                 'By continuing, you agree to our Terms and Privacy Policy',
-                style: GoogleFonts.lato(fontSize: 10, color: const Color(0xFF9E9E9E)),
+                style: GoogleFonts.roboto(fontSize: 10, color: const Color(0xFF9E9E9E)),
                 textAlign: TextAlign.center,
               ),
             ],

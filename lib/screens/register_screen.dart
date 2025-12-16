@@ -162,7 +162,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
           SnackBar(
             content: Text(
               'Please use a stronger password',
-              style: GoogleFonts.lato(
+              style: GoogleFonts.roboto(
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -232,7 +232,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
             keyboardType: keyboardType,
             obscureText: obscureText,
             onChanged: onChanged,
-            style: GoogleFonts.lato(
+            style: GoogleFonts.roboto(
               color: const Color(0xFF1A1A1A),
             ),
             decoration: InputDecoration(
@@ -250,7 +250,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                       onPressed: onToggle,
                     )
                   : null,
-              labelStyle: GoogleFonts.lato(color: const Color(0xFF4A4A4A)),
+              labelStyle: GoogleFonts.roboto(color: const Color(0xFF4A4A4A)),
               filled: true,
               fillColor: Colors.white.withOpacity(0.7),
               border: OutlineInputBorder(
@@ -356,7 +356,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                                   Text(
                                     'Create Account',
                                     textAlign: TextAlign.center,
-                                    style: GoogleFonts.playfairDisplay(
+                                    style: GoogleFonts.roboto(
                                       fontSize: 28,
                                       fontWeight: FontWeight.w700,
                                       color: const Color(0xFF1A1A1A),
@@ -367,7 +367,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                                   Text(
                                     'Join India\'s trusted marketplace',
                                     textAlign: TextAlign.center,
-                                    style: GoogleFonts.lato(
+                                    style: GoogleFonts.roboto(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                       color: const Color(0xFF4A4A4A),
@@ -489,7 +489,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                                           const SizedBox(width: 12),
                                           Text(
                                             _passwordStrengthText,
-                                            style: GoogleFonts.lato(
+                                            style: GoogleFonts.roboto(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w600,
                                               color: _passwordStrengthColor,
@@ -500,7 +500,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                                       const SizedBox(height: 8),
                                       Text(
                                         'Use 8+ characters with uppercase, lowercase, numbers & symbols',
-                                        style: GoogleFonts.lato(
+                                        style: GoogleFonts.roboto(
                                           fontSize: 11,
                                           color: const Color(0xFF6B7280),
                                         ),
@@ -572,7 +572,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                                             )
                                           : Text(
                                               'Create Account',
-                                              style: GoogleFonts.lato(
+                                              style: GoogleFonts.roboto(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w700,
                                                 letterSpacing: 0.8,
@@ -593,7 +593,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                                 children: [
                                   Text(
                                     'Already have an account? ',
-                                    style: GoogleFonts.lato(
+                                    style: GoogleFonts.roboto(
                                       color: const Color(0xFF4A4A4A),
                                     ),
                                   ),
@@ -603,7 +603,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                                     },
                                     child: Text(
                                       'Login',
-                                      style: GoogleFonts.lato(
+                                      style: GoogleFonts.roboto(
                                         color: const Color(0xFF1A1A1A),
                                         fontWeight: FontWeight.bold,
                                       ),

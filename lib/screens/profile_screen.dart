@@ -100,7 +100,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await prefs.setString('user_profile_image_path', _profileImagePath.trim());
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Profile saved', style: GoogleFonts.lato(fontSize: 12))),
+        SnackBar(content: Text('Profile saved', style: GoogleFonts.roboto(fontSize: 12))),
       );
     }
   }
@@ -193,7 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         print('📷 Image.network error: $error for URL: $_pictureUrl');
                                         return Text(
                                           uname.isNotEmpty ? uname[0].toUpperCase() : '?',
-                                          style: GoogleFonts.playfairDisplay(
+                                          style: GoogleFonts.roboto(
                                             fontSize: 24,
                                             fontWeight: FontWeight.w700,
                                             color: const Color(0xFF2C3E50),
@@ -216,7 +216,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             });
                                             return Text(
                                               uname.isNotEmpty ? uname[0].toUpperCase() : '?',
-                                              style: GoogleFonts.playfairDisplay(
+                                              style: GoogleFonts.roboto(
                                                 fontSize: 24,
                                                 fontWeight: FontWeight.w700,
                                                 color: const Color(0xFF2C3E50),
@@ -227,7 +227,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       )
                                     : Text(
                                         uname.isNotEmpty ? uname[0].toUpperCase() : '?',
-                                        style: GoogleFonts.playfairDisplay(
+                                        style: GoogleFonts.roboto(
                                           fontSize: 24,
                                           fontWeight: FontWeight.w700,
                                           color: const Color(0xFF2C3E50),
@@ -273,7 +273,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     // User name with elegant typography
                     Text(
                       uname,
-                      style: GoogleFonts.playfairDisplay(
+                      style: GoogleFonts.roboto(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -303,7 +303,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 child: Center(
                                   child: Text(
                                     'Edit Profile',
-                                    style: GoogleFonts.lato(
+                                    style: GoogleFonts.roboto(
                                       color: Colors.white,
                                       fontSize: 11,
                                       fontWeight: FontWeight.w600,
@@ -341,7 +341,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   child: Center(
                                     child: Text(
                                       'Create Post',
-                                      style: GoogleFonts.lato(
+                                      style: GoogleFonts.roboto(
                                         color: const Color(0xFF2C3E50),
                                         fontSize: 11,
                                         fontWeight: FontWeight.w700,
@@ -408,7 +408,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(width: 6),
                           Text(
                             'Pinned Sellers',
-                            style: GoogleFonts.lato(
+                            style: GoogleFonts.roboto(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                               color: _tabIndex == 0 ? const Color(0xFF2C3E50) : const Color(0xFF9CA3AF),
@@ -451,7 +451,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SizedBox(width: 6),
                           Text(
                             'Recently Viewed',
-                            style: GoogleFonts.lato(
+                            style: GoogleFonts.roboto(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                               color: _tabIndex == 1 ? const Color(0xFF2C3E50) : const Color(0xFF9CA3AF),
@@ -494,7 +494,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             const SizedBox(height: 12),
                             Text(
                               _tabIndex == 0 ? 'No pinned sellers' : 'No recent views',
-                              style: GoogleFonts.playfairDisplay(
+                              style: GoogleFonts.roboto(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF2C3E50),
@@ -505,7 +505,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               _tabIndex == 0 
                                   ? 'Save your favorite sellers here'
                                   : 'Start exploring to see history',
-                              style: GoogleFonts.lato(
+                              style: GoogleFonts.roboto(
                                 fontSize: 13,
                                 color: const Color(0xFF6B7280),
                               ),
@@ -530,7 +530,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 child: Text(
                                   'Explore Now',
-                                  style: GoogleFonts.lato(
+                                  style: GoogleFonts.roboto(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white,
@@ -630,7 +630,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: imageUrl == null 
                           ? Text(
                               dn.isNotEmpty ? dn[0].toUpperCase() : '?',
-                              style: GoogleFonts.playfairDisplay(
+                              style: GoogleFonts.roboto(
                                 fontSize: 14 ,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF2C3E50),
@@ -653,8 +653,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 11,
+                          style: GoogleFonts.roboto(
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF2C3E50),
                           ),
@@ -672,8 +672,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.lato(
-                                fontSize: 8,
+                              style: GoogleFonts.roboto(
+                                fontSize: 10,
                                 color: const Color(0xFF6B7280),
                                 fontWeight: FontWeight.w500,
                               ),
@@ -727,7 +727,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.lato(fontSize: 11, color: const Color(0xFF4A4A4A))),
+        Text(label, style: GoogleFonts.roboto(fontSize: 11, color: const Color(0xFF4A4A4A))),
         const SizedBox(height: 4),
         TextField(
           controller: controller,
@@ -748,7 +748,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               borderSide: BorderSide(color: Color(0xFFCDDC39), width: 1.4),
             ),
           ),
-          style: GoogleFonts.lato(fontSize: 11),
+          style: GoogleFonts.roboto(fontSize: 11),
         ),
       ],
     );
@@ -782,7 +782,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Edit Profile', style: GoogleFonts.lato(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
+                            Text('Edit Profile', style: GoogleFonts.roboto(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF1A1A1A))),
                             IconButton(
                               icon: const Icon(Icons.close, size: 18, color: Color(0xFF6B7280)),
                               onPressed: () => Navigator.of(context).pop(),
@@ -810,7 +810,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     side: BorderSide(color: const Color(0xFF1A1A1A).withOpacity(0.15), width: 1.2),
                                     backgroundColor: const Color(0xFFFAF7F0),
                                   ),
-                                  child: Text('Cancel', style: GoogleFonts.lato(color: const Color(0xFF1A1A1A), fontSize: 11, fontWeight: FontWeight.w700)),
+                                  child: Text('Cancel', style: GoogleFonts.roboto(color: const Color(0xFF1A1A1A), fontSize: 11, fontWeight: FontWeight.w700)),
                                 ),
                               ),
                             ),
@@ -888,7 +888,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       } catch (_) {}
                                       if (mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text('Profile updated on server', style: GoogleFonts.lato(fontSize: 12))),
+                                          SnackBar(content: Text('Profile updated on server', style: GoogleFonts.roboto(fontSize: 12))),
                                         );
                                       }
                                     } catch (e) {
@@ -930,7 +930,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     foregroundColor: const Color(0xFF1A1A1A),
                                     backgroundColor: const Color(0xFFCDDC39),
                                   ),
-                                  child: Text('Save', style: GoogleFonts.lato(color: const Color(0xFF1A1A1A), fontSize: 11, fontWeight: FontWeight.w700)),
+                                  child: Text('Save', style: GoogleFonts.roboto(color: const Color(0xFF1A1A1A), fontSize: 11, fontWeight: FontWeight.w700)),
                                 ),
                               ),
                             ),
@@ -973,7 +973,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Image picker unavailable. Please stop and re-run the app.', style: GoogleFonts.lato(fontSize: 12))),
+          SnackBar(content: Text('Image picker unavailable. Please stop and re-run the app.', style: GoogleFonts.roboto(fontSize: 12))),
         );
       }
       return null;
@@ -992,12 +992,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               ListTile(
                 leading: const Icon(Icons.photo_camera_outlined, color: Color(0xFF1A1A1A), size: 20),
-                title: Text('Camera', style: GoogleFonts.lato(color: const Color(0xFF1A1A1A), fontSize: 13, fontWeight: FontWeight.w600)),
+                title: Text('Camera', style: GoogleFonts.roboto(color: const Color(0xFF1A1A1A), fontSize: 13, fontWeight: FontWeight.w600)),
                 onTap: () => Navigator.of(context).pop(ImageSource.camera),
               ),
               ListTile(
                 leading: const Icon(Icons.photo_library_outlined, color: Color(0xFF1A1A1A), size: 20),
-                title: Text('Gallery', style: GoogleFonts.lato(color: const Color(0xFF1A1A1A), fontSize: 13, fontWeight: FontWeight.w600)),
+                title: Text('Gallery', style: GoogleFonts.roboto(color: const Color(0xFF1A1A1A), fontSize: 13, fontWeight: FontWeight.w600)),
                 onTap: () => Navigator.of(context).pop(ImageSource.gallery),
               ),
             ],

@@ -21,7 +21,7 @@ class _SellerRegistrationScreenState extends State<SellerRegistrationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Seller Registration', style: GoogleFonts.playfairDisplay(color: const Color(0xFF1A1A1A))),
+        title: Text('Seller Registration', style: GoogleFonts.roboto(color: const Color(0xFF1A1A1A))),
         backgroundColor: const Color(0xFFFAF7F0),
         elevation: 0,
       ),
@@ -52,7 +52,7 @@ class _SellerRegistrationScreenState extends State<SellerRegistrationScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: _submit,
-                  child: Text('Submit', style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF1A1A1A), fontWeight: FontWeight.w700)),
+                  child: Text('Submit', style: GoogleFonts.roboto(fontSize: 12, color: const Color(0xFF1A1A1A), fontWeight: FontWeight.w700)),
                 ),
               ),
             ],
@@ -65,7 +65,7 @@ class _SellerRegistrationScreenState extends State<SellerRegistrationScreen> {
   void _submit() {
     if (_formKey.currentState?.validate() ?? false) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Seller registration submitted', style: GoogleFonts.lato(fontSize: 12))),
+        SnackBar(content: Text('Seller registration submitted', style: GoogleFonts.roboto(fontSize: 12))),
       );
     }
   }
@@ -74,7 +74,7 @@ class _SellerRegistrationScreenState extends State<SellerRegistrationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF4A4A4A))),
+        Text(label, style: GoogleFonts.roboto(fontSize: 12, color: const Color(0xFF4A4A4A))),
         const SizedBox(height: 6),
         TextFormField(
           controller: controller,
@@ -95,7 +95,7 @@ class _SellerRegistrationScreenState extends State<SellerRegistrationScreen> {
               borderSide: BorderSide(color: Color(0xFFCDDC39), width: 1.4),
             ),
           ),
-          style: GoogleFonts.lato(fontSize: 12),
+          style: GoogleFonts.roboto(fontSize: 12),
         ),
       ],
     );
@@ -105,7 +105,7 @@ class _SellerRegistrationScreenState extends State<SellerRegistrationScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.lato(fontSize: 12, color: const Color(0xFF4A4A4A))),
+        Text(label, style: GoogleFonts.roboto(fontSize: 12, color: const Color(0xFF4A4A4A))),
         const SizedBox(height: 6),
         TextFormField(
           controller: controller,
@@ -124,7 +124,7 @@ class _SellerRegistrationScreenState extends State<SellerRegistrationScreen> {
               borderSide: BorderSide(color: Color(0xFFCDDC39), width: 1.4),
             ),
           ),
-          style: GoogleFonts.lato(fontSize: 12),
+          style: GoogleFonts.roboto(fontSize: 12),
         ),
       ],
     );
