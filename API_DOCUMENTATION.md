@@ -22,7 +22,7 @@ Generates a One-Time Password (OTP) for the provided mobile number.
 **Request Body:**
 ```json
 {
-  "mobile": "9675789818"
+  "mobile": "9000000000"
 }
 ```
 
@@ -44,7 +44,7 @@ Verifies the OTP and returns an authentication token.
 **Request Body:**
 ```json
 {
-  "mobile": "9675789818",
+  "mobile": "9000000000",
   "otp": "123456"
 }
 ```
@@ -55,7 +55,7 @@ Verifies the OTP and returns an authentication token.
   "auth_token": "eyJhbGciOiJIUzI1NiIsInR5cCI...",
   "user_account": {
     "id": "2",
-    "mobile_no": "9675789818",
+    "mobile_no": "9000000000",
     "fullname": "Guest",
     "roles": ["BUYER"]
   }
